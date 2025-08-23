@@ -14,7 +14,123 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      community_reports: {
+        Row: {
+          created_at: string
+          id: string
+          notes: string | null
+          reported_url: string
+          severity: string
+          submitted_by_email: string
+          threat_type: string
+          updated_at: string
+          verified: boolean
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reported_url: string
+          severity: string
+          submitted_by_email: string
+          threat_type: string
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notes?: string | null
+          reported_url?: string
+          severity?: string
+          submitted_by_email?: string
+          threat_type?: string
+          updated_at?: string
+          verified?: boolean
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
+      scan_history: {
+        Row: {
+          created_at: string
+          id: string
+          is_threat: boolean
+          scan_details: Json | null
+          scan_type: string
+          scanned_url: string
+          threat_level: string
+          trust_score: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_threat?: boolean
+          scan_details?: Json | null
+          scan_type?: string
+          scanned_url: string
+          threat_level: string
+          trust_score: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_threat?: boolean
+          scan_details?: Json | null
+          scan_type?: string
+          scanned_url?: string
+          threat_level?: string
+          trust_score?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          subscription_tier: string
+          threats_blocked: number
+          total_scans: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          subscription_tier?: string
+          threats_blocked?: number
+          total_scans?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          subscription_tier?: string
+          threats_blocked?: number
+          total_scans?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
