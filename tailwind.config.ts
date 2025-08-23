@@ -52,6 +52,23 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				warning: {
+					DEFAULT: 'hsl(var(--warning))',
+					foreground: 'hsl(var(--warning-foreground))'
+				},
+				success: {
+					DEFAULT: 'hsl(var(--success))',
+					foreground: 'hsl(var(--success-foreground))'
+				},
+				cyber: {
+					grid: 'hsl(var(--cyber-grid))',
+					pulse: 'hsl(var(--scan-pulse))'
+				},
+				threat: {
+					high: 'hsl(var(--threat-high))',
+					medium: 'hsl(var(--threat-medium))',
+					low: 'hsl(var(--threat-low))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
