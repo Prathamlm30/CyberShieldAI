@@ -8,7 +8,11 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-} from '@/components/ui/sidebar';
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from '@/components/ui/sidebar'; // Assuming Tooltip is exported from sidebar or your UI lib
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -19,6 +23,7 @@ import {
   Brain,
   User,
   LogOut,
+  MoreHorizontal,
   Zap
 } from 'lucide-react';
 
@@ -41,143 +46,102 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
   };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Command Center', icon: BarChart3, description: 'Real-time security' },
-    { id: 'scanner', label: 'Advanced URL & File', icon: Search, description: 'Advanced threat analysis' },
-    { id: 'community', label: 'Community threat', icon: Users, description: 'Community intelligence' },
-    { id: 'intel', label: 'Advanced threat analytics', icon: Brain, description: 'AI-powered insights' },
-    { id: 'profile', label: 'Account & security settings', icon: User, description: 'Manage your profile' }
+    { id: 'dashboard', label: 'Command Center', icon: BarChart3, description: 'Real-time security overview' },
+    { id: 'scanner', label: 'Threat Scanner', icon: Search, description: 'Advanced URL & File analysis' },
+    { id: 'community', label: 'Community Intel', icon: Users, description: 'Crowdsourced threat intelligence' },
+    { id: 'intel', label: 'AI Analytics', icon: Brain, description: 'AI-powered security insights' },
   ];
 
   return (
+    // ✨ FIX: Wrapper div now has a slightly wider collapsed state
     <div
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
-      // ✨ FIX: Increased expanded width for more space
-      className={`flex-shrink-0 transition-all duration-300 ease-in-out ${
-        isCollapsed ? 'w-20' : 'w-80' 
+      className={`flex-shrink-0 transition-all duration-300 ease-in-out bg-transparent ${
+        isCollapsed ? 'w-20' : 'w-80'
       }`}
     >
-      <Sidebar
-        className="h-screen glass border-r border-glass-border"
-      >
-        <SidebarHeader className="p-4">
+      <Sidebar className="h-screen glass border-r border-glass-border flex flex-col">
+        <SidebarHeader className="p-4 border-b border-glass-border">
           <div className="flex items-center space-x-4">
             <div className="flex items-center justify-center w-12 h-12 glass rounded-xl cyber-glow">
               <Shield className="w-6 h-6 text-primary" />
             </div>
-            {!isCollapsed && (
-              <div>
-                <h1 className="text-xl font-bold text-foreground text-glow">CyberShield AI</h1>
-                <p className="text-sm text-slate-400">Digital Sovereignty</p>
+            {/* ✨ FIX: Smooth fade-in transition for the header text */}
+            <div className={`transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
+              <h1 className="text-xl font-bold text-slate-100 text-glow">CyberShield AI</h1>
+              <div className="flex items-center space-x-2 mt-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <p className="text-xs text-green-400">All Systems Operational</p>
               </div>
-            )}
-          </div>
-
-          {!isCollapsed && (
-            <div className="mt-4 p-3 glass rounded-lg">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-                <span className="text-sm font-semibold text-success">System Online</span>
-              </div>
-              <p className="text-xs text-slate-400 mt-1">All shields active</p>
             </div>
-          )}
+          </div>
         </SidebarHeader>
 
-        <SidebarContent className="px-4">
-          <div className="space-y-2">
-            {!isCollapsed && (
-              <div className="px-3 py-2">
-                {/* ✨ FIX: Brighter, bolder heading */}
-                <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
-                  Security Operations
-                </h2>
-              </div>
-            )}
-
+        {/* ✨ FIX: Main content area is now flexible and scrollable */}
+        <SidebarContent className="px-3 py-4 flex-1">
+          <TooltipProvider delayDuration={0}>
             <SidebarMenu>
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeView === item.id;
-
                 return (
                   <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      onClick={() => onViewChange(item.id as any)}
-                      className={`p-3 rounded-xl transition-all duration-300 ${
-                        isActive
-                          ? 'bg-primary/10 border border-primary/30 shadow-glow text-primary'
-                          : 'hover:bg-white/5'
-                      }`}
-                    >
-                      <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}`}>
-                        <Icon className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-primary' : 'text-slate-400'}`} />
-                        {!isCollapsed && (
-                          <>
-                            <div className="flex-1 text-left">
-                              {/* ✨ FIX: Larger main label */}
-                              <p className={`text-base font-semibold ${isActive ? 'text-primary' : 'text-slate-100'}`}>
-                                {item.label}
-                              </p>
-                              {/* ✨ FIX: Larger, brighter description */}
-                              <p className="text-sm text-slate-400">
-                                {item.description}
-                              </p>
-                            </div>
-                            {isActive && (
-                              <Zap className="w-5 h-5 text-primary animate-pulse" />
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </SidebarMenuButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        {/* ✨ FIX: Redesigned menu button with better styling and single label */}
+                        <SidebarMenuButton
+                          onClick={() => onViewChange(item.id as any)}
+                          className={`h-12 justify-start rounded-lg transition-all duration-200 text-base font-semibold ${
+                            isActive
+                              ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary shadow-glow border border-primary/20'
+                              : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-4">
+                            <Icon className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-primary' : 'text-slate-400'}`} />
+                            <span className={`transition-opacity duration-200 whitespace-nowrap ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
+                              {item.label}
+                            </span>
+                          </div>
+                        </SidebarMenuButton>
+                      </TooltipTrigger>
+                      {/* ✨ FIX: Tooltip appears only when collapsed, providing the description */}
+                      {isCollapsed && (
+                        <TooltipContent side="right" align="center" className="ml-2">
+                          <p>{item.label}</p>
+                          <p className="text-xs text-muted-foreground">{item.description}</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
                   </SidebarMenuItem>
                 );
               })}
             </SidebarMenu>
-          </div>
+          </TooltipProvider>
         </SidebarContent>
 
-        <SidebarFooter className="p-4">
-          {!isCollapsed ? (
-            <div className="glass rounded-xl p-4 space-y-3">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary to-success rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  {/* ✨ FIX: Larger, brighter username */}
-                  <p className="text-sm font-semibold text-slate-100 truncate">
-                    {user?.email?.split('@')[0] || 'User'}
-                  </p>
-                  {/* ✨ FIX: Brighter email */}
-                  <p className="text-xs text-slate-400 truncate">
-                    {user?.email}
-                  </p>
-                </div>
+        {/* ✨ FIX: Redesigned, visually separated footer */}
+        <SidebarFooter className="p-3 border-t border-glass-border">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-success flex items-center justify-center">
+              <User className="w-5 h-5 text-white" />
+            </div>
+            <div className={`flex justify-between items-center w-full transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
+              <div className="ml-3">
+                <p className="text-sm font-semibold text-slate-100 truncate">
+                  {user?.email?.split('@')[0] || 'User'}
+                </p>
+                <p className="text-xs text-slate-400 truncate">
+                  {user?.email}
+                </p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSignOut}
-                className="w-full justify-start hover:bg-white/5"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
+              {/* This can be used to trigger a dropdown menu with settings/logout */}
+              <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/5">
+                <MoreHorizontal className="w-5 h-5 text-slate-400"/>
               </Button>
             </div>
-          ) : (
-            <div className="flex justify-center">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handleSignOut}
-                className="hover:bg-white/5 rounded-xl"
-              >
-                <LogOut className="w-4 h-4" />
-              </Button>
-            </div>
-          )}
+          </div>
         </SidebarFooter>
       </Sidebar>
     </div>
