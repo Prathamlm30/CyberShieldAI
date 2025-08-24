@@ -12,7 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
   TooltipProvider,
-} from '@/components/ui/sidebar'; // Assuming Tooltip is exported from sidebar or your UI lib
+} from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -23,8 +23,7 @@ import {
   Brain,
   User,
   LogOut,
-  MoreHorizontal,
-  Zap
+  MoreHorizontal
 } from 'lucide-react';
 
 interface EliteSidebarProps {
@@ -53,7 +52,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
   ];
 
   return (
-    // ✨ FIX: Wrapper div now has a slightly wider collapsed state
+    // ✨ CHANGE: Wrapper div is wider when collapsed for better icon spacing.
     <div
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
@@ -67,7 +66,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
             <div className="flex items-center justify-center w-12 h-12 glass rounded-xl cyber-glow">
               <Shield className="w-6 h-6 text-primary" />
             </div>
-            {/* ✨ FIX: Smooth fade-in transition for the header text */}
+            {/* ✨ CHANGE: Text now fades in and out smoothly. */}
             <div className={`transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
               <h1 className="text-xl font-bold text-slate-100 text-glow">CyberShield AI</h1>
               <div className="flex items-center space-x-2 mt-1">
@@ -78,7 +77,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
           </div>
         </SidebarHeader>
 
-        {/* ✨ FIX: Main content area is now flexible and scrollable */}
+        {/* ✨ CHANGE: Main content area is now flexible to push the footer down. */}
         <SidebarContent className="px-3 py-4 flex-1">
           <TooltipProvider delayDuration={0}>
             <SidebarMenu>
@@ -89,7 +88,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
                   <SidebarMenuItem key={item.id}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        {/* ✨ FIX: Redesigned menu button with better styling and single label */}
+                        {/* ✨ CHANGE: Redesigned menu buttons with better styling, single label, and clearer active/hover states. */}
                         <SidebarMenuButton
                           onClick={() => onViewChange(item.id as any)}
                           className={`h-12 justify-start rounded-lg transition-all duration-200 text-base font-semibold ${
@@ -106,7 +105,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
                           </div>
                         </SidebarMenuButton>
                       </TooltipTrigger>
-                      {/* ✨ FIX: Tooltip appears only when collapsed, providing the description */}
+                      {/* ✨ CHANGE: Tooltip only appears when collapsed to provide extra info without clutter. */}
                       {isCollapsed && (
                         <TooltipContent side="right" align="center" className="ml-2">
                           <p>{item.label}</p>
@@ -121,7 +120,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
           </TooltipProvider>
         </SidebarContent>
 
-        {/* ✨ FIX: Redesigned, visually separated footer */}
+        {/* ✨ CHANGE: Redesigned, visually separated footer with a professional layout. */}
         <SidebarFooter className="p-3 border-t border-glass-border">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-success flex items-center justify-center">
@@ -136,9 +135,8 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
                   {user?.email}
                 </p>
               </div>
-              {/* This can be used to trigger a dropdown menu with settings/logout */}
-              <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/5">
-                <MoreHorizontal className="w-5 h-5 text-slate-400"/>
+              <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/5" onClick={handleSignOut}>
+                <LogOut className="w-5 h-5 text-slate-400"/>
               </Button>
             </div>
           </div>
