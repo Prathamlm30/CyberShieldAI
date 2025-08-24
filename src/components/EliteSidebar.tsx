@@ -67,7 +67,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
               <Shield className="w-6 h-6 text-primary" />
             </div>
             {/* ✨ CHANGE: Text now fades in and out smoothly. */}
-            <div className={transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}}>
+            <div className={`transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
               <h1 className="text-xl font-bold text-slate-100 text-glow">CyberShield AI</h1>
               <div className="flex items-center space-x-2 mt-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -98,8 +98,8 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
                           }`}
                         >
                           <div className="flex items-center space-x-4">
-                            <Icon className={w-6 h-6 flex-shrink-0 ${isActive ? 'text-primary' : 'text-slate-400'}} />
-                            <span className={transition-opacity duration-200 whitespace-nowrap ${isCollapsed ? 'opacity-0' : 'opacity-100'}}>
+                            <Icon className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-primary' : 'text-slate-400'}`} />
+                            <span className={`transition-opacity duration-200 whitespace-nowrap ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
                               {item.label}
                             </span>
                           </div>
@@ -126,7 +126,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-success flex items-center justify-center">
               <User className="w-5 h-5 text-white" />
             </div>
-            <div className={flex justify-between items-center w-full transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}}>
+            <div className={`flex justify-between items-center w-full transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
               <div className="ml-3">
                 <p className="text-sm font-semibold text-slate-100 truncate">
                   {user?.email?.split('@')[0] || 'User'}
