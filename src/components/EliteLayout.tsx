@@ -1,69 +1,60 @@
+// src/components/EliteLayout.tsx
+
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { Sidebar, SidebarContent, SidebarProvider } from '@/components/ui/sidebar';
 import { EliteSidebar } from '@/components/EliteSidebar';
-import { EliteDashboard } from '@/components/EliteDashboard';
-import { EliteScanner } from '@/components/EliteScanner';
-import { EliteCommunity } from '@/components/EliteCommunity';
-import { EliteThreatIntel } from '@/components/EliteThreatIntel';
-import { EliteProfile } from '@/components/EliteProfile';
 
-type ViewType = 'dashboard' | 'scanner' | 'community' | 'intel' | 'profile';
+// Import the components for each view
+// You will need to create these files
+// import { CommandCenter } from '@/pages/CommandCenter';
+// import { Scanner } from '@/pages/Scanner'; 
+// ... and so on for other pages
 
-const EliteLayout = () => {
-  const { user, loading } = useAuth();
-  const [activeView, setActiveView] = useState<ViewType>('dashboard');
+// Placeholder component for demonstration
+function Placeholder({ view }: { view: string }) {
+  return (
+    <div>
+      <h1 className="text-4xl font-bold capitalize">{view}</h1>
+      <p className="text-muted-foreground">Content for the {view} page goes here.</p>
+    </div>
+  );
+}
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center space-bg">
-        <div className="glass bento-card">
-          <div className="flex items-center space-x-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="text-foreground">Initializing CyberShield AI...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
+export default function EliteLayout() {
+  // This state will control which view is shown in the main content area
+  const [activeView, setActiveView] = useState('dashboard');
 
   const renderActiveView = () => {
     switch (activeView) {
       case 'dashboard':
-        return <EliteDashboard />;
+        // Replace Placeholder with your actual CommandCenter component
+        return <Placeholder view="Command Center" />;
       case 'scanner':
-        return <EliteScanner />;
+        // Replace Placeholder with your actual Scanner component
+        return <Placeholder view="Scanner" />;
       case 'community':
-        return <EliteCommunity />;
+        return <Placeholder view="Community" />;
       case 'intel':
-        return <EliteThreatIntel />;
+        return <Placeholder view="AI Analysis" />;
       case 'profile':
-        return <EliteProfile />;
+        return <Placeholder view="Profile" />;
       default:
-        return <EliteDashboard />;
+        return <Placeholder view="Command Center" />;
     }
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full space-bg">
-        <EliteSidebar activeView={activeView} onViewChange={setActiveView} />
-        
-        <main className="flex-1 overflow-hidden">
-          <div className="h-full p-6">
-            <div className="max-w-7xl mx-auto h-full">
-              {renderActiveView()}
-            </div>
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
-  );
-};
+    // ✨ This is the main flex container
+    <div className="flex h-screen bg-background text-foreground">
+      
+      {/* 1. The Sidebar */}
+      <EliteSidebar activeView={activeView} onViewChange={setActiveView} />
 
-export default EliteLayout;
+      {/* 2. The Main Content Area */}
+      <main className="flex-1 p-12 overflow-y-auto">
+        {renderActiveView()}
+      </main>
+      
+    </div>
+  );
+}
