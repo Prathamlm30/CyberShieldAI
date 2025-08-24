@@ -58,7 +58,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
         isCollapsed ? 'w-20' : 'w-80'
       }`}
     >
-      {/* The inner content of the sidebar remains the same */}
+      {/* The inner content is wrapped to ensure proper flex layout within the sidebar */}
       <div className="flex flex-col h-full">
         <SidebarHeader className="p-6">
           <div className="flex items-center space-x-3">
@@ -178,5 +178,6 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
     </Sidebar>
   );
 }
+
 
 
