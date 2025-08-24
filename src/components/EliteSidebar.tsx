@@ -49,26 +49,27 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
   ];
 
   return (
-    // ✨ FIX: Removed the outer div and applied classes directly to the Sidebar component.
-    // Added 'overflow-hidden' to clip content when collapsed.
-    <Sidebar
+    // ✨ FIX: Wrapped the Sidebar in a div to control its width and transition reliably.
+    <div
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
-      className={`h-screen flex-shrink-0 glass border-r border-glass-border transition-all duration-300 ease-in-out overflow-hidden ${
+      className={`flex-shrink-0 transition-all duration-300 ease-in-out ${
         isCollapsed ? 'w-20' : 'w-80'
       }`}
     >
-      {/* The inner content is wrapped to ensure proper flex layout within the sidebar */}
-      <div className="flex flex-col h-full">
+      <Sidebar
+        // The className is now simpler, as the parent div handles the size.
+        className="h-screen glass border-r border-glass-border"
+      >
         <SidebarHeader className="p-6">
           <div className="flex items-center space-x-3">
             <div className="flex items-center justify-center w-12 h-12 glass rounded-xl cyber-glow">
               <Shield className="w-6 h-6 text-primary" />
             </div>
             {!isCollapsed && (
-              <div className="min-w-0">
-                <h1 className="text-xl font-bold text-foreground text-glow truncate">CyberShield AI</h1>
-                <p className="text-sm text-muted-foreground truncate">Digital Sovereignty</p>
+              <div>
+                <h1 className="text-xl font-bold text-foreground text-glow">CyberShield AI</h1>
+                <p className="text-sm text-muted-foreground">Digital Sovereignty</p>
               </div>
             )}
           </div>
@@ -84,7 +85,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
           )}
         </SidebarHeader>
 
-        <SidebarContent className="px-4 flex-1">
+        <SidebarContent className="px-4">
           <div className="space-y-2">
               {!isCollapsed && (
                 <div className="px-3 py-2">
@@ -109,15 +110,15 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
                           : 'hover:bg-white/5'
                       }`}
                     >
-                      <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}`}>
-                        <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                      <div className={flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}}>
+                        <Icon className={w-5 h-5 flex-shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground'}} />
                         {!isCollapsed && (
                           <>
-                            <div className="flex-1 text-left min-w-0">
-                              <p className={`font-medium truncate ${isActive ? 'text-primary' : 'text-foreground'}`}>
+                            <div className="flex-1 text-left">
+                              <p className={font-medium ${isActive ? 'text-primary' : 'text-foreground'}}>
                                 {item.label}
                               </p>
-                              <p className="text-xs text-muted-foreground truncate">
+                              <p className="text-xs text-muted-foreground">
                                 {item.description}
                               </p>
                             </div>
@@ -174,8 +175,8 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
             </div>
           )}
         </SidebarFooter>
-      </div>
-    </Sidebar>
+      </Sidebar>
+    </div>
   );
 }
 
