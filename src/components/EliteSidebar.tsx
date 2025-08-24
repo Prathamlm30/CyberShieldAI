@@ -89,7 +89,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
           <div className="space-y-2">
               {!isCollapsed && (
                 <div className="px-3 py-2">
-                  <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                     Security Operations
                   </h2>
                 </div>
@@ -111,11 +111,11 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
                       }`}
                     >
                       <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}`}>
-                        <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <Icon className={`w-6 h-6 flex-shrink-0 ${isActive ? 'text-primary' : 'text-slate-400'}`} />
                         {!isCollapsed && (
                           <>
                             <div className="flex-1 text-left">
-                              <p className={`font-medium ${isActive ? 'text-primary' : 'text-foreground'}`}>
+                              <p className={`text-sm font-medium ${isActive ? 'text-primary' : 'text-foreground'}`}>
                                 {item.label}
                               </p>
                               <p className="text-xs text-muted-foreground">
@@ -147,7 +147,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
                   <p className="font-medium text-foreground truncate">
                     {user?.email?.split('@')[0] || 'User'}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-xs text-slate-400 truncate">
                     {user?.email}
                   </p>
                 </div>
