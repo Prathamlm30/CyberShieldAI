@@ -68,7 +68,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
             </div>
             {/* ✨ CHANGE: Text now fades in and out smoothly. */}
             <div className={`transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
-              <h1 className="text-xl font-bold text-slate-100 text-glow">CyberShield AI</h1>
+              <h1 className="text-xl font-bold text-brown-600 text-slate-100 text-glow">CyberShield AI</h1>
               <div className="flex items-center space-x-2 mt-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <p className="text-xs text-green-400">All Systems Operational</p>
@@ -78,7 +78,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
         </SidebarHeader>
 
         {/* ✨ CHANGE: Main content area is now flexible to push the footer down. */}
-        <SidebarContent className="px-3 py-4 flex-1 color-brown">
+        <SidebarContent className="px-3 py-4 flex-1 text-brown-600">
           <TooltipProvider delayDuration={0}>
             <SidebarMenu>
               {menuItems.map((item) => {
@@ -128,14 +128,14 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
             </div>
             <div className={`flex justify-between items-center w-full transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
               <div className="ml-3">
-                <p className="text-sm font-semibold text-slate-100 truncate">
+                <p className="text-sm text-brown-400 font-semibold text-slate-100 truncate">
                   {user?.email?.split('@')[0] || 'User'}
                 </p>
-                <p className="text-xs text-slate-400 truncate">
+                <p className="text-xs text-brown-400 text-slate-400 truncate">
                   {user?.email}
                 </p>
               </div>
-              <Button variant="ghost" size="icon" className="rounded-full hover:bg-white/5" onClick={handleSignOut}>
+              <Button variant="ghost" text-brown-400 size="icon" className="rounded-full hover:bg-white/5" onClick={handleSignOut}>
                 <LogOut className="w-5 h-5 text-slate-400"/>
               </Button>
             </div>
