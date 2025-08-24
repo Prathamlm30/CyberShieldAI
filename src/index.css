@@ -95,6 +95,19 @@
     --sidebar-border: 220 13% 91%;
 
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+     --background: 1 1 5; /* A very dark navy blue */
+    --foreground: 210 40% 98%; /* White */
+    --muted-foreground: 215.4 16.3% 56.9%; /* Gray for descriptions */
+    --primary: 217.2 91.2% 59.8%; /* Bright blue */
+    --success: 142.1 76.2% 36.3%; /* Green */
+    --glass-border: 255 255 255; /* White for borders */
+
+    /* Define other variables if needed for your UI library (e.g., Shadcn UI) */
+    --card: 222.2 84% 4.9%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    /* ... and so on */
   }
 
   .dark {
@@ -191,7 +204,14 @@
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid hsl(var(--card-border));
     box-shadow: var(--shadow-glass);
+    background-color: rgba(30, 30, 45, 0.5); /* Semi-transparent dark background */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px); /* For Safari */
+  border: 1px solid rgba(var(--glass-border), 0.1);
   }
+  .shadow-glow {
+  box-shadow: 0 0 15px rgba(var(--primary), 0.3);
+}
 
   .glass-hover {
     transition: var(--transition-glass);
@@ -205,6 +225,8 @@
 
   .cyber-glow {
     animation: cyber-glow 2s ease-in-out infinite;
+     box-shadow: 0 0 20px rgba(var(--primary), 0.4), 
+              inset 0 0 10px rgba(var(--primary), 0.3);
   }
 
   .scan-pulse {
@@ -259,5 +281,7 @@
   /* Glowing text effect */
   .text-glow {
     text-shadow: 0 0 10px currentColor;
+    text-shadow: 0 0 8px rgba(var(--primary), 0.5);
+
   }
 }
