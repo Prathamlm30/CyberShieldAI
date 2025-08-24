@@ -54,7 +54,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
       className={`flex-shrink-0 transition-all duration-300 ease-in-out ${
-        isCollapsed ? 'w-20' : 'w-80'
+        isCollapsed ? 'w-16' : 'w-80'
       }`}
     >
       <Sidebar
