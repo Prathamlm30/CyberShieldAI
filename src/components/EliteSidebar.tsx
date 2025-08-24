@@ -1,4 +1,4 @@
-import { useState } from 'react'; // ✨ 1. Import useState
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   Sidebar,
@@ -30,7 +30,6 @@ interface EliteSidebarProps {
 export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
-  // ✨ 2. Add state to manage the collapsed state, defaulting to true (collapsed)
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   const handleSignOut = async () => {
@@ -42,7 +41,6 @@ export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
   };
 
   const menuItems = [
-    // ... (menuItems array remains the same)
     {
       id: 'dashboard',
       label: 'Command Center',
@@ -77,10 +75,9 @@ export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
 
   return (
     <Sidebar
-      // ✨ 3. Add event handlers and dynamic classes for width and transition
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
-      className={`glass border-r border-glass-border transition-all duration-300 ease-in-out ${
+      className={`h-screen flex-shrink-0 glass border-r border-glass-border transition-all duration-300 ease-in-out ${
         isCollapsed ? 'w-20' : 'w-80'
       }`}
     >
@@ -89,7 +86,6 @@ export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
           <div className="flex items-center justify-center w-12 h-12 glass rounded-xl cyber-glow">
             <Shield className="w-6 h-6 text-primary" />
           </div>
-          {/* ✨ 4. Conditionally render text to hide it when collapsed */}
           {!isCollapsed && (
             <div>
               <h1 className="text-xl font-bold text-foreground text-glow">CyberShield AI</h1>
@@ -98,7 +94,6 @@ export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
           )}
         </div>
         
-        {/* Hide the status box when collapsed for a cleaner look */}
         {!isCollapsed && (
           <div className="mt-4 p-3 glass rounded-lg">
             <div className="flex items-center space-x-2">
@@ -112,7 +107,6 @@ export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
 
       <SidebarContent className="px-4">
         <div className="space-y-2">
-            {/* ✨ 5. Conditionally render the section header */}
             {!isCollapsed && (
               <div className="px-3 py-2">
                 <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
@@ -136,13 +130,13 @@ export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
                         : 'hover:bg-white/5'
                     }`}
                   >
-                    {/* ✨ 6. Adjust layout based on collapsed state */}
-                    <div className={flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}}>
-                      <Icon className={w-5 h-5 flex-shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground'}} />
+                    {/* ✨ FIX: Added backticks and curly braces for className */}
+                    <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}`}>
+                      <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
                       {!isCollapsed && (
                         <>
                           <div className="flex-1 text-left">
-                            <p className={font-medium ${isActive ? 'text-primary' : 'text-foreground'}}>
+                            <p className={`font-medium ${isActive ? 'text-primary' : 'text-foreground'}`}>
                               {item.label}
                             </p>
                             <p className="text-xs text-muted-foreground">
@@ -164,7 +158,6 @@ export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        {/* ✨ 7. Only show the full footer content when expanded */}
         {!isCollapsed ? (
           <div className="glass rounded-xl p-4 space-y-3">
             <div className="flex items-center space-x-3">
@@ -173,7 +166,7 @@ export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-foreground truncate">
-                  {user?.email?.split('@')[0] || 'User'}
+                  {user?.email?.split('@[0] || 'User'}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
                   {user?.email}
@@ -191,7 +184,6 @@ export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
             </Button>
           </div>
         ) : (
-           // ✨ 8. Show only the logout icon when collapsed
           <div className="flex justify-center">
             <Button
               variant="outline"
