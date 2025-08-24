@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Sidebar, SidebarContent, SidebarProvider } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { EliteSidebar } from '@/components/EliteSidebar';
 import { EliteDashboard } from '@/components/EliteDashboard';
 import { EliteScanner } from '@/components/EliteScanner';
@@ -54,12 +54,10 @@ const EliteLayout = () => {
       <div className="min-h-screen flex w-full space-bg">
         <EliteSidebar activeView={activeView} onViewChange={setActiveView} />
         
-        {/* ✨ FINAL CHANGE: Added min-w-0 to allow the main content to shrink */}
-        <main className="flex-1 overflow-hidden min-w-0">
-          <div className="h-full p-6">
-            <div className="max-w-7xl mx-auto h-full">
-              {renderActiveView()}
-            </div>
+        {/* ✨ FIX: Restructured main content area for proper padding and centering */}
+        <main className="flex-1 min-w-0 overflow-y-auto p-8">
+          <div className="max-w-7xl mx-auto">
+            {renderActiveView()}
           </div>
         </main>
       </div>
@@ -68,3 +66,4 @@ const EliteLayout = () => {
 };
 
 export default EliteLayout;
+
