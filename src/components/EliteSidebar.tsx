@@ -27,7 +27,8 @@ interface EliteSidebarProps {
   onViewChange: (view: 'dashboard' | 'scanner' | 'community' | 'intel' | 'profile') => void;
 }
 
-export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
+// ✨ FIX: Changed to a const arrow function for broader compatibility with build tools
+export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -164,7 +165,6 @@ export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
                 <User className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                {/* ✨ FIX: Corrected the syntax error in the split function */}
                 <p className="font-medium text-foreground truncate">
                   {user?.email?.split('@')[0] || 'User'}
                 </p>
