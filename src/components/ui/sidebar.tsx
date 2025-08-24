@@ -758,4 +758,8 @@ export {
   SidebarSeparator,
   SidebarTrigger,
   useSidebar,
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
 }
