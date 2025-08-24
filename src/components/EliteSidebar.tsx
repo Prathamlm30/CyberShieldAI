@@ -108,14 +108,14 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
                         isActive 
                           ? 'bg-primary/10 border border-primary/30 shadow-glow text-primary' 
                           : 'hover:bg-white/5'
-                      }}
+                      }`}
                     >
-                      <div className={flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}}>
-                        <Icon className={w-5 h-5 flex-shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground'}} />
+                      <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}`}>
+                        <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
                         {!isCollapsed && (
                           <>
                             <div className="flex-1 text-left">
-                              <p className={font-medium ${isActive ? 'text-primary' : 'text-foreground'}}>
+                              <p className={`font-medium ${isActive ? 'text-primary' : 'text-foreground'}`}>
                                 {item.label}
                               </p>
                               <p className="text-xs text-muted-foreground">
@@ -179,6 +179,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
     </div>
   );
 }
+
 
 
 
