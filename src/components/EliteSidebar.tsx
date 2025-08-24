@@ -130,7 +130,6 @@ export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
                         : 'hover:bg-white/5'
                     }`}
                   >
-                    {/* ✨ FIX: Added backticks and curly braces for className */}
                     <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}`}>
                       <Icon className={`w-5 h-5 flex-shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground'}`} />
                       {!isCollapsed && (
@@ -165,8 +164,9 @@ export function EliteSidebar({ activeView, onViewChange }: EliteSidebarProps) {
                 <User className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1 min-w-0">
+                {/* ✨ FIX: Corrected the syntax error in the split function */}
                 <p className="font-medium text-foreground truncate">
-                  {user?.email?.split('@[0] || 'User'}
+                  {user?.email?.split('@')[0] || 'User'}
                 </p>
                 <p className="text-xs text-muted-foreground truncate">
                   {user?.email}
