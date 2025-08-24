@@ -108,7 +108,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
                         isActive 
                           ? 'bg-primary/10 border border-primary/30 shadow-glow text-primary' 
                           : 'hover:bg-white/5'
-                      }`}
+                      }}
                     >
                       <div className={flex items-center ${isCollapsed ? 'justify-center' : 'space-x-4'}}>
                         <Icon className={w-5 h-5 flex-shrink-0 ${isActive ? 'text-primary' : 'text-muted-foreground'}} />
