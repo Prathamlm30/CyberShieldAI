@@ -26,7 +26,8 @@ export default {
 				foreground: 'hsl(var(--foreground))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
-					foreground: 'hsl(var(--primary-foreground))'
+					foreground: 'hsl(var(--primary-foreground))',
+					glow: 'hsl(var(--primary-glow))'
 				},
 				secondary: {
 					DEFAULT: 'hsl(var(--secondary))',
@@ -50,7 +51,8 @@ export default {
 				},
 				card: {
 					DEFAULT: 'hsl(var(--card))',
-					foreground: 'hsl(var(--card-foreground))'
+					foreground: 'hsl(var(--card-foreground))',
+					border: 'hsl(var(--card-border))'
 				},
 				warning: {
 					DEFAULT: 'hsl(var(--warning))',
@@ -69,6 +71,10 @@ export default {
 					medium: 'hsl(var(--threat-medium))',
 					low: 'hsl(var(--threat-low))'
 				},
+				glass: {
+					DEFAULT: 'hsl(var(--card))',
+					border: 'hsl(var(--card-border))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
@@ -79,6 +85,13 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				}
+			},
+			fontFamily: {
+				inter: ['Inter', 'sans-serif'],
+			},
+			backdropBlur: {
+				'xs': '2px',
+				'4xl': '72px',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

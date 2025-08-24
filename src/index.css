@@ -6,68 +6,79 @@
 
 @layer base {
   :root {
-    /* Dark cybersecurity theme */
-    --background: 222 84% 4.9%;
+    /* Elite Digital Command Center Theme */
+    /* Deep space blue gradient background */
+    --background: 216 100% 6%;
+    --background-secondary: 220 39% 11%;
     --foreground: 210 40% 98%;
 
-    --card: 222 84% 4.9%;
+    /* Glassmorphism card backgrounds */
+    --card: 0 0% 100% / 0.05;
     --card-foreground: 210 40% 98%;
+    --card-border: 0 0% 100% / 0.1;
 
-    --popover: 222 84% 4.9%;
+    --popover: 216 100% 6%;
     --popover-foreground: 210 40% 98%;
 
-    /* Cyber green primary */
-    --primary: 142 100% 50%;
-    --primary-foreground: 222 84% 4.9%;
+    /* Electric blue primary accent */
+    --primary: 195 100% 50%;
+    --primary-foreground: 216 100% 6%;
+    --primary-glow: 195 100% 70%;
 
-    /* Dark secondary */
-    --secondary: 217 32.6% 17.5%;
+    /* Glassmorphism secondary */
+    --secondary: 0 0% 100% / 0.08;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 32.6% 17.5%;
+    --muted: 0 0% 100% / 0.06;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217 32.6% 17.5%;
+    --accent: 0 0% 100% / 0.08;
     --accent-foreground: 210 40% 98%;
 
-    /* Threat red */
-    --destructive: 0 84% 60%;
+    /* Neon red for threats */
+    --destructive: 348 100% 50%;
     --destructive-foreground: 210 40% 98%;
 
     /* Warning amber */
     --warning: 45 100% 51%;
-    --warning-foreground: 222 84% 4.9%;
+    --warning-foreground: 216 100% 6%;
 
-    /* Success/Trust green */
-    --success: 142 100% 50%;
-    --success-foreground: 222 84% 4.9%;
+    /* Neon green for success */
+    --success: 120 100% 50%;
+    --success-foreground: 216 100% 6%;
 
-    --border: 217 32.6% 17.5%;
-    --input: 217 32.6% 17.5%;
-    --ring: 142 100% 50%;
+    --border: 0 0% 100% / 0.1;
+    --input: 0 0% 100% / 0.05;
+    --ring: 195 100% 50%;
 
     --radius: 0.75rem;
 
-    /* Cybersecurity specific colors */
-    --cyber-grid: 142 100% 50%;
-    --threat-high: 0 84% 60%;
+    /* Elite theme specific colors */
+    --cyber-grid: 195 100% 50%;
+    --threat-high: 348 100% 50%;
     --threat-medium: 45 100% 51%;
-    --threat-low: 142 100% 50%;
-    --scan-pulse: 142 100% 50%;
+    --threat-low: 120 100% 50%;
+    --scan-pulse: 195 100% 50%;
 
-    /* Gradients */
-    --gradient-cyber: linear-gradient(135deg, hsl(142 100% 50% / 0.8), hsl(200 100% 50% / 0.6));
-    --gradient-threat: linear-gradient(135deg, hsl(0 84% 60% / 0.8), hsl(15 100% 50% / 0.6));
-    --gradient-matrix: linear-gradient(180deg, hsl(222 84% 4.9%), hsl(142 100% 50% / 0.05));
+    /* Advanced gradients */
+    --gradient-space: linear-gradient(135deg, hsl(216 100% 6%), hsl(220 39% 11%));
+    --gradient-cyber: linear-gradient(135deg, hsl(195 100% 50% / 0.2), hsl(120 100% 50% / 0.1));
+    --gradient-threat: linear-gradient(135deg, hsl(348 100% 50% / 0.2), hsl(45 100% 51% / 0.1));
+    --gradient-glass: linear-gradient(135deg, hsl(0 0% 100% / 0.1), hsl(0 0% 100% / 0.05));
 
-    /* Shadows and effects */
-    --shadow-cyber: 0 0 20px hsl(142 100% 50% / 0.3);
-    --shadow-threat: 0 0 20px hsl(0 84% 60% / 0.3);
-    --shadow-scanner: 0 4px 20px hsl(142 100% 50% / 0.2);
+    /* Glassmorphism shadows and effects */
+    --shadow-glass: 0 8px 32px hsl(216 100% 6% / 0.3);
+    --shadow-glow: 0 0 30px hsl(195 100% 50% / 0.3);
+    --shadow-cyber: 0 0 40px hsl(195 100% 50% / 0.4);
+    --shadow-threat: 0 0 40px hsl(348 100% 50% / 0.4);
 
-    /* Animations */
-    --transition-cyber: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Advanced animations */
+    --transition-glass: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-glow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     --pulse-duration: 2s;
+    
+    /* Count-up animation */
+    --count-duration: 2s;
 
     --sidebar-background: 0 0% 98%;
 
@@ -167,11 +178,31 @@
 
   body {
     @apply bg-background text-foreground;
-    background: var(--gradient-matrix);
+    background: var(--gradient-space);
     min-height: 100vh;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 
-  /* Utility classes for cybersecurity theme */
+  /* Elite glassmorphism utilities */
+  .glass {
+    background: hsl(var(--card));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--card-border));
+    box-shadow: var(--shadow-glass);
+  }
+
+  .glass-hover {
+    transition: var(--transition-glass);
+  }
+
+  .glass-hover:hover {
+    background: hsl(0 0% 100% / 0.08);
+    box-shadow: var(--shadow-glass), var(--shadow-glow);
+    transform: translateY(-2px);
+  }
+
   .cyber-glow {
     animation: cyber-glow 2s ease-in-out infinite;
   }
@@ -184,22 +215,49 @@
     animation: threat-pulse 1.5s ease-in-out infinite;
   }
 
-  .matrix-bg {
-    background: var(--gradient-matrix);
+  .space-bg {
+    background: var(--gradient-space);
   }
 
   .cyber-border {
     border: 1px solid hsl(var(--primary) / 0.3);
-    box-shadow: 0 0 10px hsl(var(--primary) / 0.2);
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.2);
   }
 
   .threat-border {
     border: 1px solid hsl(var(--destructive) / 0.5);
-    box-shadow: 0 0 10px hsl(var(--destructive) / 0.3);
+    box-shadow: 0 0 20px hsl(var(--destructive) / 0.3);
   }
 
   .success-border {
     border: 1px solid hsl(var(--success) / 0.5);
-    box-shadow: 0 0 10px hsl(var(--success) / 0.3);
+    box-shadow: 0 0 20px hsl(var(--success) / 0.3);
+  }
+
+  /* Bento box grid layout */
+  .bento-grid {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .bento-card {
+    @apply glass glass-hover rounded-xl p-6;
+    min-height: 140px;
+  }
+
+  /* Count-up animation */
+  @keyframes count-up {
+    0% { opacity: 0; transform: translateY(20px) scale(0.8); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .count-up {
+    animation: count-up var(--count-duration) cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Glowing text effect */
+  .text-glow {
+    text-shadow: 0 0 10px currentColor;
   }
 }
