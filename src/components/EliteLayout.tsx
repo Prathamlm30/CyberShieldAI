@@ -14,8 +14,6 @@ type ViewType = 'dashboard' | 'scanner' | 'community' | 'intel' | 'profile';
 const EliteLayout = () => {
   const { user, loading } = useAuth();
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
-  // ✨ 1. State is now managed here, in the parent component.
-  const [isCollapsed, setIsCollapsed] = useState(true);
 
   if (loading) {
     return (
@@ -53,18 +51,11 @@ const EliteLayout = () => {
 
   return (
     <SidebarProvider>
-      {/* ✨ 2. The flex class is removed from this container. */}
-      <div className="min-h-screen w-full space-bg">
-        {/* ✨ 3. The state and setter are passed down to the sidebar. */}
-        <EliteSidebar 
-          activeView={activeView} 
-          onViewChange={setActiveView}
-          isCollapsed={isCollapsed}
-          setIsCollapsed={setIsCollapsed} 
-        />
+      <div className="min-h-screen flex w-full space-bg">
+        <EliteSidebar activeView={activeView} onViewChange={setActiveView} />
         
-        {/* ✨ 4. The main content now has dynamic padding-left. */}
-        <main className={`transition-all duration-300 ease-in-out p-8 ${isCollapsed ? 'pl-28' : 'pl-80'}`}>
+        {/* ✨ FIX: Restructured main content area for proper padding and centering */}
+        <main className="flex-1 min-w-0 overflow-y-auto p-8">
           <div className="max-w-7xl mx-auto">
             {renderActiveView()}
           </div>
