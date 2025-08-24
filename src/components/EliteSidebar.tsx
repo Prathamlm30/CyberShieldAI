@@ -27,7 +27,6 @@ interface EliteSidebarProps {
   onViewChange: (view: 'dashboard' | 'scanner' | 'community' | 'intel' | 'profile') => void;
 }
 
-// ✨ FIX: Changed to a const arrow function for broader compatibility with build tools
 export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) => {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
@@ -42,36 +41,11 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
   };
 
   const menuItems = [
-    {
-      id: 'dashboard',
-      label: 'Command Center',
-      icon: BarChart3,
-      description: 'Real-time security'
-    },
-    {
-      id: 'scanner',
-      label: 'Advanced URL & File',
-      icon: Search,
-      description: 'Advanced threat analysis'
-    },
-    {
-      id: 'community',
-      label: 'Community threat',
-      icon: Users,
-      description: 'Community intelligence'
-    },
-    {
-      id: 'intel',
-      label: 'Advanced threat analytics',
-      icon: Brain,
-      description: 'AI-powered insights'
-    },
-    {
-      id: 'profile',
-      label: 'Account & security settings',
-      icon: User,
-      description: 'Manage your profile'
-    }
+    { id: 'dashboard', label: 'Command Center', icon: BarChart3, description: 'Real-time security' },
+    { id: 'scanner', label: 'Advanced URL & File', icon: Search, description: 'Advanced threat analysis' },
+    { id: 'community', label: 'Community threat', icon: Users, description: 'Community intelligence' },
+    { id: 'intel', label: 'Advanced threat analytics', icon: Brain, description: 'AI-powered insights' },
+    { id: 'profile', label: 'Account & security settings', icon: User, description: 'Manage your profile' }
   ];
 
   return (
