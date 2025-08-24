@@ -54,8 +54,7 @@ const EliteLayout = () => {
       <div className="min-h-screen flex w-full space-bg">
         <EliteSidebar activeView={activeView} onViewChange={setActiveView} />
         
-        {/* ✨ FIX: Restructured main content area for proper padding and centering */}
-        <main className="flex-1 min-w-0 overflow-y-auto p-8">
+        <main className="flex-1 min-w-0 p-8 overflow-y-auto">
           <div className="max-w-7xl mx-auto">
             {renderActiveView()}
           </div>
