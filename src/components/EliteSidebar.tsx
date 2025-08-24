@@ -78,7 +78,7 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
         </SidebarHeader>
 
         {/* ✨ CHANGE: Main content area is now flexible to push the footer down. */}
-        <SidebarContent className="px-3 py-4 flex-1">
+        <SidebarContent className="px-3 py-4 flex-1 color-brown">
           <TooltipProvider delayDuration={0}>
             <SidebarMenu>
               {menuItems.map((item) => {
