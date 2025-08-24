@@ -11,13 +11,13 @@ import {
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Shield, 
-  BarChart3, 
-  Search, 
-  Users, 
-  Brain, 
-  User, 
+import {
+  Shield,
+  BarChart3,
+  Search,
+  Users,
+  Brain,
+  User,
   LogOut,
   Zap
 } from 'lucide-react';
@@ -49,64 +49,64 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
   ];
 
   return (
-    // ✨ FIX: Wrapped the Sidebar in a div to control its width and transition reliably.
     <div
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
+      // ✨ FIX: Increased expanded width for more space
       className={`flex-shrink-0 transition-all duration-300 ease-in-out ${
-        isCollapsed ? 'w-14' : 'w-70'
+        isCollapsed ? 'w-20' : 'w-80' 
       }`}
     >
       <Sidebar
-        // The className is now simpler, as the parent div handles the size.
         className="h-screen glass border-r border-glass-border"
       >
-        <SidebarHeader className="p-6">
-          <div className="flex items-center space-x-3">
+        <SidebarHeader className="p-4">
+          <div className="flex items-center space-x-4">
             <div className="flex items-center justify-center w-12 h-12 glass rounded-xl cyber-glow">
               <Shield className="w-6 h-6 text-primary" />
             </div>
             {!isCollapsed && (
               <div>
                 <h1 className="text-xl font-bold text-foreground text-glow">CyberShield AI</h1>
-                <p className="text-sm text-muted-foreground">Digital Sovereignty</p>
+                <p className="text-sm text-slate-400">Digital Sovereignty</p>
               </div>
             )}
           </div>
-          
+
           {!isCollapsed && (
             <div className="mt-4 p-3 glass rounded-lg">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-                <span className="text-sm text-success">System Online</span>
+                <span className="text-sm font-semibold text-success">System Online</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">All shields active</p>
+              <p className="text-xs text-slate-400 mt-1">All shields active</p>
             </div>
           )}
         </SidebarHeader>
 
         <SidebarContent className="px-4">
           <div className="space-y-2">
-              {!isCollapsed && (
-                <div className="px-3 py-2">
-                  <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    Security Operations
-                  </h2>
-                </div>
-              )}
-            
+            {!isCollapsed && (
+              <div className="px-3 py-2">
+                {/* ✨ FIX: Brighter, bolder heading */}
+                <h2 className="text-sm font-bold text-slate-300 uppercase tracking-wider">
+                  Security Operations
+                </h2>
+              </div>
+            )}
+
             <SidebarMenu>
               {menuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeView === item.id;
-                
+
                 return (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       onClick={() => onViewChange(item.id as any)}
-                      className={`p-4 rounded-xl transition-all duration-300 ${
-                        isActive 
-                          ? 'bg-primary/10 border border-primary/30 shadow-glow text-primary' 
+                      className={`p-3 rounded-xl transition-all duration-300 ${
+                        isActive
+                          ? 'bg-primary/10 border border-primary/30 shadow-glow text-primary'
                           : 'hover:bg-white/5'
                       }`}
                     >
@@ -115,15 +115,17 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
                         {!isCollapsed && (
                           <>
                             <div className="flex-1 text-left">
-                              <p className={`text-sm font-medium ${isActive ? 'text-primary' : 'text-foreground'}`}>
+                              {/* ✨ FIX: Larger main label */}
+                              <p className={`text-base font-semibold ${isActive ? 'text-primary' : 'text-slate-100'}`}>
                                 {item.label}
                               </p>
-                              <p className="text-xs text-muted-foreground">
+                              {/* ✨ FIX: Larger, brighter description */}
+                              <p className="text-sm text-slate-400">
                                 {item.description}
                               </p>
                             </div>
                             {isActive && (
-                              <Zap className="w-4 h-4 text-primary animate-pulse" />
+                              <Zap className="w-5 h-5 text-primary animate-pulse" />
                             )}
                           </>
                         )}
@@ -144,9 +146,11 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
                   <User className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-foreground truncate">
+                  {/* ✨ FIX: Larger, brighter username */}
+                  <p className="text-sm font-semibold text-slate-100 truncate">
                     {user?.email?.split('@')[0] || 'User'}
                   </p>
+                  {/* ✨ FIX: Brighter email */}
                   <p className="text-xs text-slate-400 truncate">
                     {user?.email}
                   </p>
@@ -179,7 +183,3 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
     </div>
   );
 }
-
-
-
-
