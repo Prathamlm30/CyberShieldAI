@@ -54,7 +54,8 @@ const EliteLayout = () => {
       <div className="min-h-screen flex w-full space-bg">
         <EliteSidebar activeView={activeView} onViewChange={setActiveView} />
         
-        <main className="flex-1 overflow-hidden">
+        {/* ✨ FINAL CHANGE: Added min-w-0 to allow the main content to shrink */}
+        <main className="flex-1 overflow-hidden min-w-0">
           <div className="h-full p-6">
             <div className="max-w-7xl mx-auto h-full">
               {renderActiveView()}
