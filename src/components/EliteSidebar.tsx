@@ -52,7 +52,6 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
   ];
 
   return (
-    // ✨ CHANGE: Wrapper div is wider when collapsed for better icon spacing.
     <div
       onMouseEnter={() => setIsCollapsed(false)}
       onMouseLeave={() => setIsCollapsed(true)}
@@ -66,18 +65,18 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
             <div className="flex items-center justify-center w-12 h-12 glass rounded-xl cyber-glow">
               <Shield className="w-6 h-6 text-primary" />
             </div>
-            {/* ✨ CHANGE: Text now fades in and out smoothly. */}
             <div className={`transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
-              <h1 className="text-xl font-bold text-slate-100 text-glow">CyberShield AI</h1>
+              {/* ✨ CHANGE: Brighter header color */}
+              <h1 className="text-xl font-bold text-white text-glow">CyberShield AI</h1>
               <div className="flex items-center space-x-2 mt-1">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <p className="text-xs text-green-400">All Systems Operational</p>
+                {/* ✨ CHANGE: Brighter status color */}
+                <p className="text-xs text-green-500">All Systems Operational</p>
               </div>
             </div>
           </div>
         </SidebarHeader>
 
-        {/* ✨ CHANGE: Main content area is now flexible to push the footer down. */}
         <SidebarContent className="px-3 py-4 flex-1">
           <TooltipProvider delayDuration={0}>
             <SidebarMenu>
@@ -88,13 +87,13 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
                   <SidebarMenuItem key={item.id}>
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        {/* ✨ CHANGE: Redesigned menu buttons with better styling, single label, and clearer active/hover states. */}
                         <SidebarMenuButton
                           onClick={() => onViewChange(item.id as any)}
                           className={`h-12 justify-start rounded-lg transition-all duration-200 text-base font-semibold ${
                             isActive
                               ? 'bg-gradient-to-r from-primary/10 to-primary/5 text-primary shadow-glow border border-primary/20'
-                              : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                              // ✨ CHANGE: Better contrast for inactive menu items
+                              : 'text-slate-400 hover:bg-white/5 hover:text-white'
                           }`}
                         >
                           <div className="flex items-center space-x-4">
@@ -105,7 +104,6 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
                           </div>
                         </SidebarMenuButton>
                       </TooltipTrigger>
-                      {/* ✨ CHANGE: Tooltip only appears when collapsed to provide extra info without clutter. */}
                       {isCollapsed && (
                         <TooltipContent side="right" align="center" className="ml-2">
                           <p>{item.label}</p>
@@ -120,7 +118,6 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
           </TooltipProvider>
         </SidebarContent>
 
-        {/* ✨ CHANGE: Redesigned, visually separated footer with a professional layout. */}
         <SidebarFooter className="p-3 border-t border-glass-border">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-success flex items-center justify-center">
@@ -128,10 +125,12 @@ export const EliteSidebar = ({ activeView, onViewChange }: EliteSidebarProps) =>
             </div>
             <div className={`flex justify-between items-center w-full transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
               <div className="ml-3">
-                <p className="text-sm font-semibold text-slate-100 truncate">
+                {/* ✨ CHANGE: Brighter username color */}
+                <p className="text-sm font-semibold text-white truncate">
                   {user?.email?.split('@')[0] || 'User'}
                 </p>
-                <p className="text-xs text-slate-400 truncate">
+                {/* ✨ CHANGE: Better contrast for email */}
+                <p className="text-xs text-slate-500 truncate">
                   {user?.email}
                 </p>
               </div>
