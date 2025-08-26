@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { SidebarProvider } from '@/components/ui/sidebar';
-import { EliteSidebar } from '@/components/EliteSidebar';
+import { LiquidSidebar } from '@/components/LiquidSidebar';
 import { EliteDashboard } from '@/components/EliteDashboard';
 import { EliteScanner } from '@/components/EliteScanner';
 import { EliteCommunity } from '@/components/EliteCommunity';
@@ -14,6 +13,7 @@ type ViewType = 'dashboard' | 'scanner' | 'community' | 'intel' | 'profile';
 const EliteLayout = () => {
   const { user, loading } = useAuth();
   const [activeView, setActiveView] = useState<ViewType>('dashboard');
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
 
   if (loading) {
     return (
@@ -50,17 +50,26 @@ const EliteLayout = () => {
   };
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full space-bg">
-        <EliteSidebar activeView={activeView} onViewChange={setActiveView} />
-        
-        <main className="flex-1 min-w-0 p-8 overflow-y-auto">
-          <div className="max-w-7xl mx-auto">
-            {renderActiveView()}
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
+    <div className="liquid-container">
+      <LiquidSidebar 
+        activeView={activeView} 
+        onViewChange={setActiveView}
+        expanded={sidebarExpanded}
+        onExpandedChange={setSidebarExpanded}
+      />
+      
+      <main 
+        className="liquid-main"
+        style={{
+          marginLeft: sidebarExpanded ? '0' : '0',
+          width: sidebarExpanded ? 'calc(100% - 320px)' : 'calc(100% - 64px)'
+        }}
+      >
+        <div className="max-w-none">
+          {renderActiveView()}
+        </div>
+      </main>
+    </div>
   );
 };
 

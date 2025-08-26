@@ -72,13 +72,19 @@
     --shadow-cyber: 0 0 40px hsl(195 100% 50% / 0.4);
     --shadow-threat: 0 0 40px hsl(348 100% 50% / 0.4);
 
-    /* Advanced animations */
-    --transition-glass: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-glow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    --pulse-duration: 2s;
-    
-    /* Count-up animation */
-    --count-duration: 2s;
+  /* Advanced animations */
+  --transition-glass: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-glow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-liquid: all 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-text-reveal: opacity 225ms cubic-bezier(0.4, 0, 0.2, 1) 75ms;
+  --pulse-duration: 2s;
+  
+  /* Count-up animation */
+  --count-duration: 2s;
+  
+  /* Light seam effect */
+  --seam-intensity: 0.3;
+  --seam-intensity-active: 0.6;
 
     --sidebar-background: 0 0% 98%;
     
@@ -257,6 +263,66 @@
     box-shadow: 0 0 20px hsl(var(--success) / 0.3);
   }
 
+  /* Liquid Command Interface */
+  .liquid-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    background: var(--gradient-space);
+  }
+
+  .liquid-sidebar {
+    flex-shrink: 0;
+    background: var(--gradient-space);
+    position: relative;
+    transition: var(--transition-liquid);
+  }
+
+  .liquid-sidebar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, 
+      transparent 0%, 
+      hsl(var(--primary) / var(--seam-intensity)) 20%, 
+      hsl(var(--primary) / var(--seam-intensity)) 80%, 
+      transparent 100%
+    );
+    box-shadow: 0 0 8px hsl(var(--primary) / 0.2);
+    transition: var(--transition-liquid);
+  }
+
+  .liquid-sidebar.expanded::after {
+    --seam-intensity: var(--seam-intensity-active);
+    box-shadow: 0 0 12px hsl(var(--primary) / 0.4);
+  }
+
+  .liquid-main {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+    transition: var(--transition-liquid);
+  }
+
+  .liquid-grid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    transition: var(--transition-liquid);
+  }
+
+  .sidebar-text {
+    opacity: 0;
+    transition: var(--transition-text-reveal);
+  }
+
+  .liquid-sidebar.expanded .sidebar-text {
+    opacity: 1;
+  }
+
   /* Bento box grid layout */
   .bento-grid {
     display: grid;
@@ -267,6 +333,7 @@
   .bento-card {
     @apply glass glass-hover rounded-xl p-6;
     min-height: 140px;
+    transition: var(--transition-liquid);
   }
 
   /* Count-up animation */

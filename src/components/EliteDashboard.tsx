@@ -131,7 +131,7 @@ export function EliteDashboard() {
             <p className="text-muted-foreground">Real-time security overview and threat analysis</p>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="liquid-grid">
           {[...Array(4)].map((_, i) => (
             <Card key={i} className="bento-card">
               <CardContent className="p-6">
@@ -161,7 +161,7 @@ export function EliteDashboard() {
       </div>
 
       {/* Main Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="liquid-grid">
         <StatCard
           icon={Scan}
           title="Total Scans"
@@ -194,7 +194,7 @@ export function EliteDashboard() {
       </div>
 
       {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="liquid-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))' }}>
         <Card className="bento-card glass-hover">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground">
