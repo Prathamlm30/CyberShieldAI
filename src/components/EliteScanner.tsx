@@ -18,18 +18,42 @@ import {
   TrendingUp
 } from 'lucide-react';
 
-interface ScanResult {
-  url: string;
+interface OracleVerdict {
   trustScore: number;
-  riskLevel: 'low' | 'medium' | 'high';
-  threats: string[];
-  analysis: {
-    ssl: boolean;
-    reputation: string;
-    phishing: boolean;
-    malware: boolean;
-    blockchain: boolean;
+  confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  verdict: 'SAFE' | 'CAUTION' | 'DANGEROUS';
+  summary: string;
+  threatVectors: string[];
+  data: {
+    sslReport: {
+      isValid: boolean;
+      issuer: string;
+      validFrom: string;
+      validTo: string;
+      daysToExpiry: number;
+      signatureAlgorithm: string;
+      tlsVersions: string[];
+      isExtendedValidation: boolean;
+      certificateAge: number;
+    };
+    domainIntel: {
+      domainAge: number;
+      registrar: string;
+      createdDate: string;
+      updatedDate: string;
+      expiryDate: string;
+      isPrivacyProtected: boolean;
+      nameservers: string[];
+      ipAddress: string;
+    };
+    threatFeeds: {
+      virusTotalReport: any;
+      safeBrowsingStatus: string;
+      abuseIpReport: any;
+    };
   };
+  analysisTime: number;
+  cacheHit: boolean;
 }
 
 export function EliteScanner() {
@@ -37,20 +61,17 @@ export function EliteScanner() {
   const { toast } = useToast();
   const [url, setUrl] = useState('');
   const [scanning, setScanning] = useState(false);
-  const [scanResult, setScanResult] = useState<ScanResult | null>(null);
+  const [scanResult, setScanResult] = useState<OracleVerdict | null>(null);
   const [progress, setProgress] = useState(0);
 
-  const mockScan = async (inputUrl: string): Promise<ScanResult> => {
-    const urlObj = new URL(inputUrl);
-    const domain = urlObj.hostname.toLowerCase();
-    
-    // Simulate progressive scanning
+  const performSecurityAnalysis = async (inputUrl: string): Promise<OracleVerdict> => {
+    // Simulate progressive scanning UI
     const steps = [
-      { label: 'Initializing scan...', progress: 10 },
-      { label: 'Checking SSL certificate...', progress: 25 },
-      { label: 'Analyzing domain reputation...', progress: 45 },
-      { label: 'Scanning for phishing indicators...', progress: 65 },
-      { label: 'Detecting malware signatures...', progress: 85 },
+      { label: 'Initializing Project Oracle...', progress: 10 },
+      { label: 'Analyzing SSL/TLS certificate...', progress: 25 },
+      { label: 'Querying threat intelligence feeds...', progress: 45 },
+      { label: 'Cross-referencing security databases...', progress: 65 },
+      { label: 'Computing trust score...', progress: 85 },
       { label: 'Finalizing analysis...', progress: 100 }
     ];
 
@@ -59,49 +80,16 @@ export function EliteScanner() {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
 
-    // Enhanced threat detection logic
-    const knownSafeDomains = ['google.com', 'github.com', 'stackoverflow.com'];
-    const suspiciousDomains = ['free-bitcoin.com', 'crypto-giveaway.net', 'urgent-security-update.com'];
-    
-    const isSafe = knownSafeDomains.some(safe => domain.includes(safe));
-    const isSuspicious = suspiciousDomains.some(sus => domain.includes(sus)) || 
-                        domain.includes('phish') || 
-                        domain.includes('scam') ||
-                        Math.random() < 0.3;
+    // Call the sophisticated backend analysis
+    const response = await supabase.functions.invoke('security-analysis', {
+      body: { url: inputUrl }
+    });
 
-    const trustScore = isSafe ? 85 + Math.floor(Math.random() * 15) :
-                      isSuspicious ? Math.floor(Math.random() * 40) :
-                      45 + Math.floor(Math.random() * 40);
-
-    const riskLevel = trustScore >= 70 ? 'low' : 
-                     trustScore >= 40 ? 'medium' : 'high';
-
-    const threats = [];
-    if (isSuspicious) {
-      const possibleThreats = [
-        'Phishing attempt detected',
-        'Suspicious domain registration',
-        'Malware distribution site',
-        'Cryptocurrency scam',
-        'Identity theft risk',
-        'Fake security alerts'
-      ];
-      threats.push(...possibleThreats.slice(0, Math.floor(Math.random() * 3) + 1));
+    if (response.error) {
+      throw new Error(response.error.message || 'Analysis failed');
     }
 
-    return {
-      url: inputUrl,
-      trustScore,
-      riskLevel,
-      threats,
-      analysis: {
-        ssl: Math.random() > 0.2,
-        reputation: isSafe ? 'Excellent' : isSuspicious ? 'Poor' : 'Good',
-        phishing: isSuspicious,
-        malware: isSuspicious && Math.random() > 0.6,
-        blockchain: !isSuspicious && Math.random() > 0.7
-      }
-    };
+    return response.data;
   };
 
   const handleScan = async () => {
@@ -135,19 +123,20 @@ export function EliteScanner() {
     setScanResult(null);
 
     try {
-      const result = await mockScan(fullUrl);
+      const result = await performSecurityAnalysis(fullUrl);
       setScanResult(result);
 
       // Save scan to database
       if (user) {
+        const riskLevel = result.verdict.toLowerCase();
         await supabase
           .from('scan_history')
           .insert({
             user_id: user.id,
-            scanned_url: result.url,
-            threat_level: result.riskLevel,
+            scanned_url: fullUrl,
+            threat_level: riskLevel,
             trust_score: result.trustScore,
-            is_threat: result.riskLevel === 'high',
+            is_threat: result.verdict === 'DANGEROUS',
             scan_details: result as any
           });
 
@@ -156,29 +145,30 @@ export function EliteScanner() {
           .from('user_profiles')
           .select('total_scans, threats_blocked')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (profile) {
           await supabase
             .from('user_profiles')
             .update({
               total_scans: profile.total_scans + 1,
-              threats_blocked: profile.threats_blocked + (result.riskLevel === 'high' ? 1 : 0)
+              threats_blocked: profile.threats_blocked + (result.verdict === 'DANGEROUS' ? 1 : 0)
             })
             .eq('user_id', user.id);
         }
       }
 
       toast({
-        title: "Scan Complete",
-        description: `URL analyzed with ${result.trustScore}% trust score`,
-        variant: result.riskLevel === 'high' ? 'destructive' : 'default',
+        title: "Analysis Complete",
+        description: `${result.summary} (Trust Score: ${result.trustScore}%)`,
+        variant: result.verdict === 'DANGEROUS' ? 'destructive' : 'default',
       });
 
     } catch (error) {
+      console.error('Security analysis failed:', error);
       toast({
-        title: "Scan Failed",
-        description: "Unable to complete security analysis",
+        title: "Analysis Failed",
+        description: "Unable to complete security analysis. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -187,20 +177,20 @@ export function EliteScanner() {
     }
   };
 
-  const getThreatColor = (level: string) => {
-    switch (level) {
-      case 'high': return 'destructive';
-      case 'medium': return 'warning';
-      case 'low': return 'success';
+  const getVerdictColor = (verdict: string) => {
+    switch (verdict) {
+      case 'DANGEROUS': return 'destructive';
+      case 'CAUTION': return 'warning';
+      case 'SAFE': return 'success';
       default: return 'secondary';
     }
   };
 
-  const getThreatIcon = (level: string) => {
-    switch (level) {
-      case 'high': return AlertTriangle;
-      case 'medium': return Shield;
-      case 'low': return CheckCircle;
+  const getVerdictIcon = (verdict: string) => {
+    switch (verdict) {
+      case 'DANGEROUS': return AlertTriangle;
+      case 'CAUTION': return Shield;
+      case 'SAFE': return CheckCircle;
       default: return Shield;
     }
   };
@@ -209,12 +199,12 @@ export function EliteScanner() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground text-glow">Threat Scanner</h1>
-          <p className="text-muted-foreground">Advanced URL and domain security analysis</p>
+          <h1 className="text-3xl font-bold text-foreground text-glow">Project Oracle</h1>
+          <p className="text-muted-foreground">Enterprise-grade threat intelligence & security analysis</p>
         </div>
         <Badge className="glass cyber-glow px-4 py-2">
           <Zap className="w-4 h-4 mr-2" />
-          AI-Powered Analysis
+          Multi-Vector Analysis
         </Badge>
       </div>
 
@@ -244,14 +234,14 @@ export function EliteScanner() {
               disabled={scanning || !url.trim()}
               className="px-8 cyber-glow"
             >
-              {scanning ? 'Scanning...' : 'Analyze Threat'}
+              {scanning ? 'Analyzing...' : 'Run Analysis'}
             </Button>
           </div>
 
           {scanning && (
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Scanning in progress...</span>
+                <span className="text-muted-foreground">Oracle analysis in progress...</span>
                 <span className="text-primary">{progress}%</span>
               </div>
               <Progress value={progress} className="h-2" />
@@ -267,9 +257,9 @@ export function EliteScanner() {
           <Card className="bento-card glass-hover">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span className="text-foreground">Trust Assessment</span>
-                <Badge variant={getThreatColor(scanResult.riskLevel) as any} className="px-3 py-1">
-                  {scanResult.riskLevel.toUpperCase()} RISK
+                <span className="text-foreground">Oracle Verdict</span>
+                <Badge variant={getVerdictColor(scanResult.verdict) as any} className="px-3 py-1">
+                  {scanResult.verdict} • {scanResult.confidence}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -302,12 +292,18 @@ export function EliteScanner() {
                 </div>
                 
                 <div className="glass rounded-lg p-3">
-                  <p className="font-medium text-foreground truncate">{scanResult.url}</p>
-                  <div className="flex items-center justify-center gap-2 mt-2">
-                    <Clock className="w-4 h-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      Scanned {new Date().toLocaleTimeString()}
-                    </span>
+                  <p className="font-medium text-foreground truncate">{url}</p>
+                  <p className="text-sm text-muted-foreground mt-1">{scanResult.summary}</p>
+                  <div className="flex items-center justify-center gap-4 mt-2">
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
+                        {scanResult.analysisTime}ms
+                      </span>
+                    </div>
+                    {scanResult.cacheHit && (
+                      <Badge variant="secondary" className="text-xs">Cached</Badge>
+                    )}
                   </div>
                 </div>
               </div>
@@ -317,44 +313,53 @@ export function EliteScanner() {
           {/* Detailed Analysis */}
           <Card className="bento-card glass-hover">
             <CardHeader>
-              <CardTitle className="text-foreground">Security Analysis</CardTitle>
-              <CardDescription>Comprehensive threat assessment results</CardDescription>
+              <CardTitle className="text-foreground">Technical Analysis</CardTitle>
+              <CardDescription>Multi-source intelligence assessment</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-3">
                 <div className="flex items-center justify-between p-3 glass rounded-lg">
                   <span className="text-sm text-foreground">SSL Certificate</span>
-                  <Badge variant={scanResult.analysis.ssl ? 'success' : 'destructive'}>
-                    {scanResult.analysis.ssl ? 'Valid' : 'Invalid'}
+                  <Badge variant={scanResult.data.sslReport.isValid ? 'success' : 'destructive'}>
+                    {scanResult.data.sslReport.isValid ? 
+                      `Valid (${scanResult.data.sslReport.issuer})` : 'Invalid'}
                   </Badge>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 glass rounded-lg">
-                  <span className="text-sm text-foreground">Domain Reputation</span>
-                  <Badge variant={scanResult.analysis.reputation === 'Excellent' ? 'success' : 
-                                scanResult.analysis.reputation === 'Good' ? 'warning' : 'destructive'}>
-                    {scanResult.analysis.reputation}
+                  <span className="text-sm text-foreground">Domain Age</span>
+                  <Badge variant={scanResult.data.domainIntel.domainAge > 365 ? 'success' : 
+                               scanResult.data.domainIntel.domainAge > 90 ? 'warning' : 'destructive'}>
+                    {scanResult.data.domainIntel.domainAge} days
                   </Badge>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 glass rounded-lg">
-                  <span className="text-sm text-foreground">Phishing Detection</span>
-                  <Badge variant={scanResult.analysis.phishing ? 'destructive' : 'success'}>
-                    {scanResult.analysis.phishing ? 'Detected' : 'Clean'}
+                  <span className="text-sm text-foreground">Safe Browsing</span>
+                  <Badge variant={scanResult.data.threatFeeds.safeBrowsingStatus === 'SAFE' ? 'success' : 'destructive'}>
+                    {scanResult.data.threatFeeds.safeBrowsingStatus}
                   </Badge>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 glass rounded-lg">
-                  <span className="text-sm text-foreground">Malware Scan</span>
-                  <Badge variant={scanResult.analysis.malware ? 'destructive' : 'success'}>
-                    {scanResult.analysis.malware ? 'Found' : 'Clean'}
+                  <span className="text-sm text-foreground">VirusTotal</span>
+                  <Badge variant={
+                    scanResult.data.threatFeeds.virusTotalReport?.data?.attributes?.stats?.malicious > 0 ? 'destructive' :
+                    scanResult.data.threatFeeds.virusTotalReport?.data?.attributes?.stats?.suspicious > 0 ? 'warning' : 'success'
+                  }>
+                    {scanResult.data.threatFeeds.virusTotalReport ? 
+                      `${scanResult.data.threatFeeds.virusTotalReport.data?.attributes?.stats?.malicious || 0} malicious` : 'N/A'}
                   </Badge>
                 </div>
                 
                 <div className="flex items-center justify-between p-3 glass rounded-lg">
-                  <span className="text-sm text-foreground">Blockchain Verified</span>
-                  <Badge variant={scanResult.analysis.blockchain ? 'success' : 'secondary'}>
-                    {scanResult.analysis.blockchain ? 'Yes' : 'No'}
+                  <span className="text-sm text-foreground">IP Reputation</span>
+                  <Badge variant={
+                    scanResult.data.threatFeeds.abuseIpReport?.data?.abuseConfidencePercentage > 50 ? 'destructive' :
+                    scanResult.data.threatFeeds.abuseIpReport?.data?.abuseConfidencePercentage > 10 ? 'warning' : 'success'
+                  }>
+                    {scanResult.data.threatFeeds.abuseIpReport ? 
+                      `${scanResult.data.threatFeeds.abuseIpReport.data?.abuseConfidencePercentage || 0}% abuse` : 'Clean'}
                   </Badge>
                 </div>
               </div>
@@ -363,22 +368,22 @@ export function EliteScanner() {
         </div>
       )}
 
-      {/* Threats Detected */}
-      {scanResult && scanResult.threats.length > 0 && (
+      {/* Threat Vectors Detected */}
+      {scanResult && scanResult.threatVectors.length > 0 && (
         <Card className="bento-card glass-hover threat-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="w-5 h-5" />
-              Security Threats Detected
+              Threat Vectors Detected
             </CardTitle>
-            <CardDescription>Immediate attention required for the following issues</CardDescription>
+            <CardDescription>Security indicators requiring immediate attention</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {scanResult.threats.map((threat, index) => (
+              {scanResult.threatVectors.map((vector, index) => (
                 <div key={index} className="flex items-center gap-3 p-3 glass rounded-lg threat-border">
                   <AlertTriangle className="w-5 h-5 text-destructive flex-shrink-0" />
-                  <span className="text-foreground">{threat}</span>
+                  <span className="text-foreground">{vector.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}</span>
                 </div>
               ))}
             </div>
