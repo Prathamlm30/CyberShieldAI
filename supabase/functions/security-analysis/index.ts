@@ -90,6 +90,7 @@ async function performDomainAnalysis(domain: string): Promise<DomainIntel> {
     
     if (WHOISJSON_API_KEY) {
       try {
+        console.log(`Making WHOIS request for domain: ${domain}`);
         const whoisResponse = await fetch('https://whoisjson.com/api/v1/whois', {
           method: 'POST',
           headers: {
@@ -101,11 +102,33 @@ async function performDomainAnalysis(domain: string): Promise<DomainIntel> {
           })
         });
         
-        whoisData = await whoisResponse.json();
+        if (!whoisResponse.ok) {
+          console.error(`WHOIS API returned status: ${whoisResponse.status}`);
+          throw new Error(`WHOIS API error: ${whoisResponse.status}`);
+        }
+        
+        const responseText = await whoisResponse.text();
+        console.log(`WHOIS response: ${responseText.substring(0, 200)}...`);
+        
+        try {
+          whoisData = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('Failed to parse WHOIS JSON:', parseError);
+          console.log('Raw response:', responseText);
+          throw new Error('Invalid JSON response from WHOIS API');
+        }
         
         // Calculate domain age if created_date exists
         if (whoisData.created_date) {
-          domainAge = Math.floor((Date.now() - new Date(whoisData.created_date).getTime()) / (1000 * 60 * 60 * 24));
+          const createdDate = new Date(whoisData.created_date);
+          if (!isNaN(createdDate.getTime())) {
+            domainAge = Math.floor((Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
+            console.log(`Domain age calculated: ${domainAge} days`);
+          } else {
+            console.error('Invalid created_date format:', whoisData.created_date);
+          }
+        } else {
+          console.log('No created_date found in WHOIS response');
         }
       } catch (whoisError) {
         console.error('WHOIS lookup failed:', whoisError);
