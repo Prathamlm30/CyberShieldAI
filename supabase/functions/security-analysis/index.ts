@@ -230,7 +230,7 @@ async function performThreatIntelligence(url: string, ipAddress: string): Promis
   
   const results: ThreatFeeds = {
     virusTotalReport: null,
-    safeBrowsingStatus: 'SAFE',
+    safeBrowsingStatus: 'UNKNOWN',
     abuseIpReport: null
   };
 
@@ -278,12 +278,12 @@ async function performThreatIntelligence(url: string, ipAddress: string): Promis
         results.safeBrowsingStatus = webRiskData.threat ? 'DANGEROUS' : 'SAFE';
       } else {
         console.error('Google Web Risk API error:', webRiskResponse.status);
-        // API error should be handled gracefully
-        results.safeBrowsingStatus = 'ERROR';
+        // Graceful degrade
+        results.safeBrowsingStatus = 'UNKNOWN';
       }
     } catch (error) {
       console.error('Google Web Risk analysis failed:', error);
-      results.safeBrowsingStatus = 'ERROR';
+      results.safeBrowsingStatus = 'UNKNOWN';
     }
   }
 
@@ -337,20 +337,14 @@ async function getOracleVerdict(url: string): Promise<OracleVerdict | { status: 
       }
     }
 
-    // CRITICAL ERROR HANDLING: Check if critical APIs failed
+    // Graceful degradation: don't fail if intel sources error
     if (threatFeeds.safeBrowsingStatus === 'ERROR') {
-      return {
-        status: 'ERROR',
-        summary: 'A critical intelligence source could not be reached.'
-      };
+      console.error('Web Risk returned ERROR; degrading to UNKNOWN and continuing');
+      threatFeeds.safeBrowsingStatus = 'UNKNOWN';
     }
 
-    // Check if VirusTotal failed (no report means API error)
     if (VIRUSTOTAL_API_KEY && !threatFeeds.virusTotalReport) {
-      return {
-        status: 'ERROR',
-        summary: 'A critical intelligence source could not be reached.'
-      };
+      console.error('VirusTotal report unavailable; continuing with partial intelligence');
     }
 
     const { trustScore, confidence, verdict, summary, threatVectors } = calculateVerdict(
@@ -375,11 +369,45 @@ async function getOracleVerdict(url: string): Promise<OracleVerdict | { status: 
     };
 
   } catch (error) {
-    console.error('Oracle verdict failed:', error);
-    return {
-      status: 'ERROR',
-      summary: 'A critical intelligence source could not be reached.'
+    console.error('Oracle verdict failed, returning graceful fallback:', error);
+    const fallback: OracleVerdict = {
+      trustScore: 50,
+      confidence: 'LOW',
+      verdict: 'CAUTION',
+      summary: 'Partial analysis completed due to upstream errors.',
+      threatVectors: [],
+      data: {
+        sslReport: {
+          isValid: false,
+          issuer: 'Unknown',
+          validFrom: '',
+          validTo: '',
+          daysToExpiry: 0,
+          signatureAlgorithm: 'Unknown',
+          tlsVersions: [],
+          isExtendedValidation: false,
+          certificateAge: 0
+        },
+        domainIntel: {
+          domainAge: null,
+          registrar: 'Unknown',
+          createdDate: '',
+          updatedDate: '',
+          expiryDate: '',
+          isPrivacyProtected: false,
+          nameservers: [],
+          ipAddress: 'Unknown'
+        },
+        threatFeeds: {
+          virusTotalReport: null,
+          safeBrowsingStatus: 'UNKNOWN',
+          abuseIpReport: null
+        }
+      },
+      analysisTime: Date.now() - startTime,
+      cacheHit: false
     };
+    return fallback;
   }
 }
 
