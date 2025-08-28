@@ -11,6 +11,7 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const VIRUSTOTAL_API_KEY = Deno.env.get('VIRUSTOTAL_API_KEY');
 const GOOGLE_SAFE_BROWSING_API_KEY = Deno.env.get('GOOGLE_SAFE_BROWSING_API_KEY');
 const ABUSEIPDB_API_KEY = Deno.env.get('ABUSEIPDB_API_KEY');
+const WHOISJSON_API_KEY = Deno.env.get('WHOISJSON_API_KEY');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -37,7 +38,7 @@ interface SSLReport {
 }
 
 interface DomainIntel {
-  domainAge: number;
+  domainAge: number | null;
   registrar: string;
   createdDate: string;
   updatedDate: string;
@@ -73,7 +74,7 @@ function getCacheKey(url: string): string {
   return `security_analysis_${encodeURIComponent(url)}`;
 }
 
-// Tier 1: DNS & WHOIS Analysis
+// Tier 1: DNS & WHOIS Analysis using whoisjson.com
 async function performDomainAnalysis(domain: string): Promise<DomainIntel> {
   console.log(`Starting domain analysis for: ${domain}`);
   
@@ -83,17 +84,41 @@ async function performDomainAnalysis(domain: string): Promise<DomainIntel> {
     const ipData = await ipResponse.json();
     const ipAddress = ipData.Answer?.[0]?.data || 'Unknown';
 
-    // WHOIS lookup using a free API
-    const whoisResponse = await fetch(`https://api.whoisjson.com/v1/${domain}`);
-    const whoisData = await whoisResponse.json();
+    // WHOIS lookup using whoisjson.com with API key
+    let domainAge: number | null = null;
+    let whoisData: any = {};
     
-    const createdDate = whoisData.created_date || new Date().toISOString();
-    const domainAge = Math.floor((Date.now() - new Date(createdDate).getTime()) / (1000 * 60 * 60 * 24));
+    if (WHOISJSON_API_KEY) {
+      try {
+        const whoisResponse = await fetch('https://whoisjson.com/api/v1/whois', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            domain: domain,
+            key: WHOISJSON_API_KEY
+          })
+        });
+        
+        whoisData = await whoisResponse.json();
+        
+        // Calculate domain age if created_date exists
+        if (whoisData.created_date) {
+          domainAge = Math.floor((Date.now() - new Date(whoisData.created_date).getTime()) / (1000 * 60 * 60 * 24));
+        }
+      } catch (whoisError) {
+        console.error('WHOIS lookup failed:', whoisError);
+        domainAge = null;
+      }
+    } else {
+      console.log('WHOISJSON_API_KEY not configured');
+    }
     
     return {
       domainAge,
       registrar: whoisData.registrar || 'Unknown',
-      createdDate,
+      createdDate: whoisData.created_date || '',
       updatedDate: whoisData.updated_date || '',
       expiryDate: whoisData.expiry_date || '',
       isPrivacyProtected: whoisData.privacy || false,
@@ -103,9 +128,9 @@ async function performDomainAnalysis(domain: string): Promise<DomainIntel> {
   } catch (error) {
     console.error('Domain analysis failed:', error);
     return {
-      domainAge: 0,
+      domainAge: null,
       registrar: 'Unknown',
-      createdDate: new Date().toISOString(),
+      createdDate: '',
       updatedDate: '',
       expiryDate: '',
       isPrivacyProtected: false,
@@ -176,7 +201,7 @@ async function performSSLAnalysis(domain: string): Promise<SSLReport> {
   }
 }
 
-// Tier 2: Threat Intelligence
+// Tier 2: Threat Intelligence using Google Web Risk API
 async function performThreatIntelligence(url: string, ipAddress: string): Promise<ThreatFeeds> {
   console.log(`Starting threat intelligence analysis for: ${url}`);
   
@@ -217,29 +242,25 @@ async function performThreatIntelligence(url: string, ipAddress: string): Promis
     }
   }
 
-  // Google Safe Browsing
+  // Google Web Risk API (replacing Safe Browsing)
   if (GOOGLE_SAFE_BROWSING_API_KEY) {
     try {
-      const safeBrowsingResponse = await fetch(`https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${GOOGLE_SAFE_BROWSING_API_KEY}`, {
-        method: 'POST',
-        body: JSON.stringify({
-          client: {
-            clientId: 'cybershield-ai',
-            clientVersion: '1.0.0'
-          },
-          threatInfo: {
-            threatTypes: ['MALWARE', 'SOCIAL_ENGINEERING', 'UNWANTED_SOFTWARE', 'POTENTIALLY_HARMFUL_APPLICATION'],
-            platformTypes: ['ANY_PLATFORM'],
-            threatEntryTypes: ['URL'],
-            threatEntries: [{ url }]
-          }
-        })
-      });
+      const encodedUrl = encodeURIComponent(url);
+      const threatTypes = 'MALWARE,SOCIAL_ENGINEERING,UNWANTED_SOFTWARE';
+      const webRiskResponse = await fetch(`https://webrisk.googleapis.com/v1/uris:search?key=${GOOGLE_SAFE_BROWSING_API_KEY}&uri=${encodedUrl}&threatTypes=${threatTypes}`);
       
-      const safeBrowsingData = await safeBrowsingResponse.json();
-      results.safeBrowsingStatus = safeBrowsingData.matches ? 'DANGEROUS' : 'SAFE';
+      if (webRiskResponse.ok) {
+        const webRiskData = await webRiskResponse.json();
+        // If response contains a threat object, site is dangerous; empty {} means safe
+        results.safeBrowsingStatus = webRiskData.threat ? 'DANGEROUS' : 'SAFE';
+      } else {
+        console.error('Google Web Risk API error:', webRiskResponse.status);
+        // API error should be handled gracefully
+        results.safeBrowsingStatus = 'ERROR';
+      }
     } catch (error) {
-      console.error('Safe Browsing analysis failed:', error);
+      console.error('Google Web Risk analysis failed:', error);
+      results.safeBrowsingStatus = 'ERROR';
     }
   }
 
@@ -262,7 +283,84 @@ async function performThreatIntelligence(url: string, ipAddress: string): Promis
   return results;
 }
 
-// Calculate Trust Score and Determine Verdict
+// Central Oracle Verdict Engine - Implements Trusted Domain Override & Error Handling
+async function getOracleVerdict(url: string): Promise<OracleVerdict | { status: string; summary: string }> {
+  const startTime = Date.now();
+  
+  try {
+    // Extract domain from URL
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname;
+
+    // Run all API calls in parallel as mandated
+    const [domainIntel, sslReport, threatFeeds] = await Promise.all([
+      performDomainAnalysis(domain),
+      performSSLAnalysis(domain),
+      performThreatIntelligence(url, '')
+    ]);
+
+    // Update threat feeds with correct IP
+    if (domainIntel.ipAddress !== 'Unknown' && ABUSEIPDB_API_KEY) {
+      try {
+        const abuseResponse = await fetch(`https://api.abuseipdb.com/api/v2/check?ipAddress=${domainIntel.ipAddress}&maxAgeInDays=90&verbose`, {
+          headers: {
+            'Key': ABUSEIPDB_API_KEY,
+            'Accept': 'application/json'
+          }
+        });
+        threatFeeds.abuseIpReport = await abuseResponse.json();
+      } catch (error) {
+        console.error('AbuseIPDB analysis failed:', error);
+      }
+    }
+
+    // CRITICAL ERROR HANDLING: Check if critical APIs failed
+    if (threatFeeds.safeBrowsingStatus === 'ERROR') {
+      return {
+        status: 'ERROR',
+        summary: 'A critical intelligence source could not be reached.'
+      };
+    }
+
+    // Check if VirusTotal failed (no report means API error)
+    if (VIRUSTOTAL_API_KEY && !threatFeeds.virusTotalReport) {
+      return {
+        status: 'ERROR',
+        summary: 'A critical intelligence source could not be reached.'
+      };
+    }
+
+    const { trustScore, confidence, verdict, summary, threatVectors } = calculateVerdict(
+      sslReport,
+      domainIntel,
+      threatFeeds
+    );
+
+    return {
+      trustScore,
+      confidence,
+      verdict,
+      summary,
+      threatVectors,
+      data: {
+        sslReport,
+        domainIntel,
+        threatFeeds
+      },
+      analysisTime: Date.now() - startTime,
+      cacheHit: false
+    };
+
+  } catch (error) {
+    console.error('Oracle verdict failed:', error);
+    return {
+      status: 'ERROR',
+      summary: 'A critical intelligence source could not be reached.'
+    };
+  }
+}
+
+// Calculate Trust Score with Trusted Domain Override
 function calculateVerdict(sslReport: SSLReport, domainIntel: DomainIntel, threatFeeds: ThreatFeeds): {
   trustScore: number;
   confidence: 'HIGH' | 'MEDIUM' | 'LOW';
@@ -273,6 +371,13 @@ function calculateVerdict(sslReport: SSLReport, domainIntel: DomainIntel, threat
   let score = 100;
   const threatVectors: string[] = [];
   let confidence: 'HIGH' | 'MEDIUM' | 'LOW' = 'HIGH';
+
+  // TRUSTED DOMAIN OVERRIDE: Check if VT malicious = 0 AND Google Safe Browsing = SAFE
+  const isTrustedDomain = (
+    threatFeeds.virusTotalReport?.data?.attributes?.stats?.malicious === 0 &&
+    threatFeeds.safeBrowsingStatus === 'SAFE'
+  );
+  const scoreFloor = isTrustedDomain ? 65 : 0;
 
   // Critical Penalties
   if (threatFeeds.safeBrowsingStatus === 'DANGEROUS') {
@@ -285,8 +390,8 @@ function calculateVerdict(sslReport: SSLReport, domainIntel: DomainIntel, threat
     threatVectors.push('MALICIOUS_FLAG_VIRUSTOTAL');
   }
 
-  // High Penalties
-  if (domainIntel.domainAge < 30) {
+  // High Penalties - Only apply if domain age is not null
+  if (domainIntel.domainAge !== null && domainIntel.domainAge < 30) {
     score -= 40;
     threatVectors.push('RECENTLY_CREATED_DOMAIN');
   }
@@ -301,8 +406,8 @@ function calculateVerdict(sslReport: SSLReport, domainIntel: DomainIntel, threat
     threatVectors.push('MULTIPLE_SUSPICIOUS_FLAGS');
   }
 
-  // Medium Penalties
-  if (domainIntel.domainAge < 90) {
+  // Medium Penalties - Only apply if domain age is not null
+  if (domainIntel.domainAge !== null && domainIntel.domainAge < 90) {
     score -= 25;
     threatVectors.push('YOUNG_DOMAIN');
   }
@@ -328,8 +433,8 @@ function calculateVerdict(sslReport: SSLReport, domainIntel: DomainIntel, threat
     threatVectors.push('OUTDATED_TLS_PROTOCOL');
   }
 
-  // Positive Indicators (Bonuses)
-  if (domainIntel.domainAge > 3650) { // > 10 years
+  // Positive Indicators (Bonuses) - Only apply if domain age is not null
+  if (domainIntel.domainAge !== null && domainIntel.domainAge > 3650) { // > 10 years
     score += 10;
   }
 
@@ -341,8 +446,8 @@ function calculateVerdict(sslReport: SSLReport, domainIntel: DomainIntel, threat
     score += 5;
   }
 
-  // Ensure score is within bounds
-  score = Math.max(0, Math.min(100, score));
+  // Apply Trusted Domain Override scoreFloor
+  score = Math.max(scoreFloor, Math.min(100, score));
 
   // Determine confidence based on API availability
   if (!threatFeeds.virusTotalReport && !threatFeeds.abuseIpReport) {
@@ -351,7 +456,7 @@ function calculateVerdict(sslReport: SSLReport, domainIntel: DomainIntel, threat
     confidence = 'MEDIUM';
   }
 
-  // Determine verdict
+  // Determine verdict and dynamic summary
   let verdict: 'SAFE' | 'CAUTION' | 'DANGEROUS';
   let summary: string;
 
@@ -366,13 +471,21 @@ function calculateVerdict(sslReport: SSLReport, domainIntel: DomainIntel, threat
     summary = 'This URL has been flagged as potentially dangerous. Avoid visiting this site.';
   }
 
+  // Generate dynamic summary based on confirmed threat vectors
   if (threatVectors.length > 0) {
     const topThreat = threatVectors[0];
     if (topThreat.includes('MALICIOUS') || topThreat.includes('FLAGGED')) {
       summary = 'This domain is flagged as malicious by multiple security vendors.';
     } else if (topThreat.includes('RECENTLY_CREATED')) {
       summary = 'This domain was registered recently, which is a common indicator of malicious intent.';
+    } else if (topThreat.includes('IP_HIGH_ABUSE')) {
+      summary = 'This domain\'s IP address has a high abuse confidence rating.';
     }
+  }
+
+  // Override summary for trusted domains
+  if (isTrustedDomain && verdict === 'SAFE') {
+    summary = 'This URL is verified safe by multiple trusted security sources.';
   }
 
   return { trustScore: score, confidence, verdict, summary, threatVectors };
@@ -421,48 +534,26 @@ serve(async (req) => {
 
     console.log('Starting fresh analysis for URL:', url);
     
-    // Extract domain from URL
-    const urlObj = new URL(url);
-    const domain = urlObj.hostname;
+    // Use the central Oracle Verdict Engine
+    const oracleResult = await getOracleVerdict(url);
+    
+    // Handle API errors
+    if ('status' in oracleResult) {
+      return new Response(JSON.stringify(oracleResult), {
+        status: 503,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
 
-    // Perform all analyses in parallel where possible
-    const [domainIntel, sslReport] = await Promise.all([
-      performDomainAnalysis(domain),
-      performSSLAnalysis(domain)
-    ]);
-
-    // Threat intelligence requires IP address, so run after domain analysis
-    const threatFeeds = await performThreatIntelligence(url, domainIntel.ipAddress);
-
-    // Calculate final verdict
-    const { trustScore, confidence, verdict, summary, threatVectors } = calculateVerdict(
-      sslReport,
-      domainIntel,
-      threatFeeds
-    );
-
-    const oracleVerdict: OracleVerdict = {
-      trustScore,
-      confidence,
-      verdict,
-      summary,
-      threatVectors,
-      data: {
-        sslReport,
-        domainIntel,
-        threatFeeds
-      },
-      analysisTime: Date.now() - startTime,
-      cacheHit: false
-    };
+    const oracleVerdict = oracleResult as OracleVerdict;
 
     // Cache the result
     try {
       await supabase.from('scan_history').insert({
         scanned_url: url,
-        trust_score: trustScore,
-        threat_level: verdict.toLowerCase(),
-        is_threat: verdict === 'DANGEROUS',
+        trust_score: oracleVerdict.trustScore,
+        threat_level: oracleVerdict.verdict.toLowerCase(),
+        is_threat: oracleVerdict.verdict === 'DANGEROUS',
         scan_type: 'comprehensive',
         scan_details: JSON.stringify(oracleVerdict),
         user_id: '00000000-0000-0000-0000-000000000000' // System user for cache
@@ -471,7 +562,7 @@ serve(async (req) => {
       console.error('Failed to cache result:', cacheError);
     }
 
-    console.log(`Analysis completed for ${url}: ${trustScore}/100 (${verdict})`);
+    console.log(`Analysis completed for ${url}: ${oracleVerdict.trustScore}/100 (${oracleVerdict.verdict})`);
 
     return new Response(JSON.stringify(oracleVerdict), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
