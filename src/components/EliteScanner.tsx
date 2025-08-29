@@ -89,7 +89,16 @@ export function EliteScanner() {
       throw new Error(response.error.message || 'Analysis failed');
     }
 
-    return response.data;
+    // Structured response contract
+    const payload = response.data as any;
+    if (payload?.status === 'ERROR') {
+      throw new Error(payload?.message || 'Analysis failed');
+    }
+    if (payload?.status === 'SUCCESS' && payload?.data) {
+      return payload.data as OracleVerdict;
+    }
+
+    throw new Error('Unexpected response from analysis engine');
   };
 
   const handleScan = async () => {

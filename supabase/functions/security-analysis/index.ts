@@ -315,12 +315,64 @@ async function getOracleVerdict(url: string): Promise<OracleVerdict | { status: 
     const urlObj = new URL(url);
     const domain = urlObj.hostname;
 
-    // Run all API calls in parallel as mandated
-    const [domainIntel, sslReport, threatFeeds] = await Promise.all([
+    // Run all API calls in parallel with Promise.allSettled for maximum resilience
+    const settled = await Promise.allSettled([
       performDomainAnalysis(domain),
       performSSLAnalysis(domain),
       performThreatIntelligence(url, '')
     ]);
+
+    const domainIntel = settled[0].status === 'fulfilled' ? settled[0].value : {
+      domainAge: null,
+      registrar: 'Unknown',
+      createdDate: '',
+      updatedDate: '',
+      expiryDate: '',
+      isPrivacyProtected: false,
+      nameservers: [],
+      ipAddress: 'Unknown'
+    };
+    if (settled[0].status === 'rejected') {
+      console.error('ERROR: Domain analysis failed:', settled[0].reason);
+    }
+
+    const sslReport = settled[1].status === 'fulfilled' ? settled[1].value : {
+      isValid: false,
+      issuer: 'Unknown',
+      validFrom: '',
+      validTo: '',
+      daysToExpiry: 0,
+      signatureAlgorithm: 'Unknown',
+      tlsVersions: [],
+      isExtendedValidation: false,
+      certificateAge: 0
+    };
+    if (settled[1].status === 'rejected') {
+      console.error('ERROR: SSL analysis failed:', settled[1].reason);
+    }
+
+    const threatFeeds = settled[2].status === 'fulfilled' ? settled[2].value : {
+      virusTotalReport: null,
+      safeBrowsingStatus: 'UNKNOWN',
+      abuseIpReport: null
+    };
+    if (settled[2].status === 'rejected') {
+      console.error('ERROR: Threat intelligence aggregation failed:', settled[2].reason);
+    }
+
+    // Critical secrets presence check
+    const vtMissing = !VIRUSTOTAL_API_KEY;
+    const webRiskMissing = !GOOGLE_SAFE_BROWSING_API_KEY;
+    if (vtMissing && webRiskMissing) {
+      throw new Error('FATAL ERROR: VIRUSTOTAL_API_KEY and GOOGLE_SAFE_BROWSING_API_KEY are not configured');
+    }
+
+    // Determine core intelligence availability
+    const vtError = vtMissing || !threatFeeds.virusTotalReport;
+    const webRiskError = webRiskMissing || threatFeeds.safeBrowsingStatus === 'UNKNOWN';
+    if (vtError && webRiskError) {
+      throw new Error('Analysis Failed: Core threat intelligence sources are currently unavailable.');
+    }
 
     // Update threat feeds with correct IP
     if (domainIntel.ipAddress !== 'Unknown' && ABUSEIPDB_API_KEY) {
@@ -369,45 +421,9 @@ async function getOracleVerdict(url: string): Promise<OracleVerdict | { status: 
     };
 
   } catch (error) {
-    console.error('Oracle verdict failed, returning graceful fallback:', error);
-    const fallback: OracleVerdict = {
-      trustScore: 50,
-      confidence: 'LOW',
-      verdict: 'CAUTION',
-      summary: 'Partial analysis completed due to upstream errors.',
-      threatVectors: [],
-      data: {
-        sslReport: {
-          isValid: false,
-          issuer: 'Unknown',
-          validFrom: '',
-          validTo: '',
-          daysToExpiry: 0,
-          signatureAlgorithm: 'Unknown',
-          tlsVersions: [],
-          isExtendedValidation: false,
-          certificateAge: 0
-        },
-        domainIntel: {
-          domainAge: null,
-          registrar: 'Unknown',
-          createdDate: '',
-          updatedDate: '',
-          expiryDate: '',
-          isPrivacyProtected: false,
-          nameservers: [],
-          ipAddress: 'Unknown'
-        },
-        threatFeeds: {
-          virusTotalReport: null,
-          safeBrowsingStatus: 'UNKNOWN',
-          abuseIpReport: null
-        }
-      },
-      analysisTime: Date.now() - startTime,
-      cacheHit: false
-    };
-    return fallback;
+    console.error('Oracle verdict failed:', error);
+    // Bubble up a specific error so the caller can return a structured error response
+    throw error instanceof Error ? error : new Error('Analysis failed');
   }
 }
 
@@ -549,23 +565,30 @@ serve(async (req) => {
 
   try {
     const { url } = await req.json();
-    
+
     if (!url) {
-      return new Response(JSON.stringify({ error: 'URL is required' }), {
-        status: 400,
+      return new Response(JSON.stringify({ status: 'ERROR', message: 'URL is required' }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate URL early
+    try {
+      new URL(url);
+    } catch {
+      return new Response(JSON.stringify({ status: 'ERROR', message: 'Invalid URL provided.' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     const startTime = Date.now();
-    const cacheKey = getCacheKey(url);
 
-    // Check cache first
+    // Check cache first (1 hour)
     const { data: cachedResult } = await supabase
       .from('scan_history')
       .select('*')
       .eq('scanned_url', url)
-      .gte('created_at', new Date(Date.now() - 3600000).toISOString()) // 1 hour cache
+      .gte('created_at', new Date(Date.now() - 3600000).toISOString())
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -575,57 +598,60 @@ serve(async (req) => {
       const verdict: OracleVerdict = {
         ...JSON.parse(cachedResult.scan_details),
         cacheHit: true,
-        analysisTime: Date.now() - startTime
+        analysisTime: Date.now() - startTime,
       };
-      
-      return new Response(JSON.stringify(verdict), {
+      return new Response(JSON.stringify({ status: 'SUCCESS', data: verdict }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     console.log('Starting fresh analysis for URL:', url);
-    
-    // Use the central Oracle Verdict Engine
-    const oracleResult = await getOracleVerdict(url);
-    
-    // Handle API errors
-    if ('status' in oracleResult) {
-      return new Response(JSON.stringify(oracleResult), {
-        status: 503,
+
+    // Compute result using the Oracle engine
+    let oracleResult: OracleVerdict;
+    try {
+      const result = await getOracleVerdict(url);
+      if ('status' in (result as any)) {
+        // Backward compatibility: legacy error object
+        const legacy = result as { status: string; summary: string };
+        return new Response(JSON.stringify({ status: 'ERROR', message: legacy.summary }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      } else {
+        oracleResult = result as OracleVerdict;
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Analysis failed';
+      return new Response(JSON.stringify({ status: 'ERROR', message }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
-    const oracleVerdict = oracleResult as OracleVerdict;
-
-    // Cache the result
+    // Cache the successful result (best-effort)
     try {
       await supabase.from('scan_history').insert({
         scanned_url: url,
-        trust_score: oracleVerdict.trustScore,
-        threat_level: oracleVerdict.verdict.toLowerCase(),
-        is_threat: oracleVerdict.verdict === 'DANGEROUS',
+        trust_score: oracleResult.trustScore,
+        threat_level: oracleResult.verdict.toLowerCase(),
+        is_threat: oracleResult.verdict === 'DANGEROUS',
         scan_type: 'comprehensive',
-        scan_details: JSON.stringify(oracleVerdict),
-        user_id: '00000000-0000-0000-0000-000000000000' // System user for cache
+        scan_details: JSON.stringify(oracleResult),
+        user_id: '00000000-0000-0000-0000-000000000000'
       });
     } catch (cacheError) {
       console.error('Failed to cache result:', cacheError);
     }
 
-    console.log(`Analysis completed for ${url}: ${oracleVerdict.trustScore}/100 (${oracleVerdict.verdict})`);
+    console.log(`Analysis completed for ${url}: ${oracleResult.trustScore}/100 (${oracleResult.verdict})`);
 
-    return new Response(JSON.stringify(oracleVerdict), {
+    return new Response(JSON.stringify({ status: 'SUCCESS', data: oracleResult }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
 
   } catch (error) {
-    console.error('Security analysis failed:', error);
-    return new Response(JSON.stringify({ 
-      error: 'Analysis failed',
-      details: error.message 
-    }), {
-      status: 500,
+    console.error('Security analysis failed (top-level):', error);
+    const message = error instanceof Error ? error.message : 'Unexpected error during analysis';
+    return new Response(JSON.stringify({ status: 'ERROR', message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
