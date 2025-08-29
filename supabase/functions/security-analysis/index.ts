@@ -427,7 +427,7 @@ async function getOracleVerdict(url: string): Promise<OracleVerdict | { status: 
   }
 }
 
-// Calculate Trust Score with Trusted Domain Override
+// Calculate Trust Score with Proper API Failure Handling
 function calculateVerdict(sslReport: SSLReport, domainIntel: DomainIntel, threatFeeds: ThreatFeeds): {
   trustScore: number;
   confidence: 'HIGH' | 'MEDIUM' | 'LOW';
@@ -435,63 +435,90 @@ function calculateVerdict(sslReport: SSLReport, domainIntel: DomainIntel, threat
   summary: string;
   threatVectors: string[];
 } {
-  let score = 100;
+  let score = 50; // Start with neutral score instead of 100
   const threatVectors: string[] = [];
-  let confidence: 'HIGH' | 'MEDIUM' | 'LOW' = 'HIGH';
+  let confidence: 'HIGH' | 'MEDIUM' | 'LOW' = 'MEDIUM';
 
-  // TRUSTED DOMAIN OVERRIDE: Check if VT malicious = 0 AND Google Safe Browsing = SAFE
-  const isTrustedDomain = (
-    threatFeeds.virusTotalReport?.data?.attributes?.stats?.malicious === 0 &&
-    threatFeeds.safeBrowsingStatus === 'SAFE'
-  );
-  const scoreFloor = isTrustedDomain ? 65 : 0;
+  // Check API availability to determine confidence
+  const vtAvailable = threatFeeds.virusTotalReport && threatFeeds.virusTotalReport.data;
+  const safeBrowsingAvailable = threatFeeds.safeBrowsingStatus !== 'UNKNOWN';
+  const abuseIpAvailable = threatFeeds.abuseIpReport && threatFeeds.abuseIpReport.data;
+  const whoisAvailable = domainIntel.domainAge !== null;
 
-  // Critical Penalties
+  // Adjust confidence based on API availability
+  const availableApis = [vtAvailable, safeBrowsingAvailable, abuseIpAvailable, whoisAvailable].filter(Boolean).length;
+  
+  if (availableApis >= 3) {
+    confidence = 'HIGH';
+    score = 70; // Higher starting score with good data
+  } else if (availableApis >= 2) {
+    confidence = 'MEDIUM';
+    score = 50; // Neutral starting score
+  } else {
+    confidence = 'LOW';
+    score = 30; // Lower starting score with limited data
+    threatVectors.push('LIMITED_INTELLIGENCE_DATA');
+  }
+
+  // CRITICAL PENALTIES (Immediate danger signals)
   if (threatFeeds.safeBrowsingStatus === 'DANGEROUS') {
-    score = Math.min(score - 70, 40);
+    score = Math.min(score - 60, 15);
     threatVectors.push('GOOGLE_SAFE_BROWSING_FLAGGED');
   }
 
-  if (threatFeeds.virusTotalReport?.data?.attributes?.stats?.malicious > 0) {
-    score = Math.min(score - 70, 40);
-    threatVectors.push('MALICIOUS_FLAG_VIRUSTOTAL');
+  if (vtAvailable && threatFeeds.virusTotalReport.data.attributes?.stats?.malicious > 0) {
+    const maliciousCount = threatFeeds.virusTotalReport.data.attributes.stats.malicious;
+    score = Math.min(score - (maliciousCount * 15 + 45), 20);
+    threatVectors.push('VIRUSTOTAL_MALICIOUS_DETECTION');
   }
 
-  // High Penalties - Only apply if domain age is not null
-  if (domainIntel.domainAge !== null && domainIntel.domainAge < 30) {
-    score -= 40;
+  // HIGH PENALTIES
+  if (whoisAvailable && domainIntel.domainAge < 7) {
+    score -= 35;
+    threatVectors.push('EXTREMELY_NEW_DOMAIN');
+  } else if (whoisAvailable && domainIntel.domainAge < 30) {
+    score -= 25;
     threatVectors.push('RECENTLY_CREATED_DOMAIN');
   }
 
-  if (threatFeeds.abuseIpReport?.data?.abuseConfidencePercentage > 50) {
-    score -= 40;
-    threatVectors.push('IP_HIGH_ABUSE_CONFIDENCE');
+  if (abuseIpAvailable && threatFeeds.abuseIpReport.data.abuseConfidencePercentage > 75) {
+    score -= 35;
+    threatVectors.push('IP_VERY_HIGH_ABUSE');
+  } else if (abuseIpAvailable && threatFeeds.abuseIpReport.data.abuseConfidencePercentage > 25) {
+    score -= 20;
+    threatVectors.push('IP_MODERATE_ABUSE');
   }
 
-  if (threatFeeds.virusTotalReport?.data?.attributes?.stats?.suspicious > 3) {
-    score -= 30;
+  // MEDIUM PENALTIES
+  if (vtAvailable && threatFeeds.virusTotalReport.data.attributes?.stats?.suspicious > 5) {
+    score -= 25;
+    threatVectors.push('HIGH_SUSPICIOUS_FLAGS');
+  } else if (vtAvailable && threatFeeds.virusTotalReport.data.attributes?.stats?.suspicious > 2) {
+    score -= 15;
     threatVectors.push('MULTIPLE_SUSPICIOUS_FLAGS');
   }
 
-  // Medium Penalties - Only apply if domain age is not null
-  if (domainIntel.domainAge !== null && domainIntel.domainAge < 90) {
-    score -= 25;
+  if (whoisAvailable && domainIntel.domainAge < 90) {
+    score -= 15;
     threatVectors.push('YOUNG_DOMAIN');
   }
 
   if (!sslReport.isValid || sslReport.daysToExpiry <= 0) {
-    score -= 25;
+    score -= 20;
     threatVectors.push('INVALID_SSL_CERTIFICATE');
   }
 
-  if (sslReport.certificateAge < 15) {
-    score -= 20;
+  if (sslReport.certificateAge < 7) {
+    score -= 15;
+    threatVectors.push('VERY_NEW_CERTIFICATE');
+  } else if (sslReport.certificateAge < 30) {
+    score -= 10;
     threatVectors.push('RECENTLY_ISSUED_CERTIFICATE');
   }
 
-  // Low Penalties
+  // LOW PENALTIES
   if (domainIntel.isPrivacyProtected) {
-    score -= 10;
+    score -= 8;
     threatVectors.push('USES_DOMAIN_PRIVACY');
   }
 
@@ -500,58 +527,62 @@ function calculateVerdict(sslReport: SSLReport, domainIntel: DomainIntel, threat
     threatVectors.push('OUTDATED_TLS_PROTOCOL');
   }
 
-  // Positive Indicators (Bonuses) - Only apply if domain age is not null
-  if (domainIntel.domainAge !== null && domainIntel.domainAge > 3650) { // > 10 years
+  // POSITIVE INDICATORS (Trust bonuses)
+  if (vtAvailable && threatFeeds.virusTotalReport.data.attributes?.stats?.malicious === 0 && 
+      safeBrowsingAvailable && threatFeeds.safeBrowsingStatus === 'SAFE') {
+    score += 25;
+  }
+
+  if (whoisAvailable && domainIntel.domainAge > 3650) { // > 10 years
+    score += 15;
+  } else if (whoisAvailable && domainIntel.domainAge > 1825) { // > 5 years
     score += 10;
+  } else if (whoisAvailable && domainIntel.domainAge > 365) { // > 1 year
+    score += 5;
   }
 
   if (sslReport.isExtendedValidation) {
+    score += 8;
+  }
+
+  if (['DigiCert', 'Sectigo', 'GlobalSign', 'Let\'s Encrypt'].includes(sslReport.issuer)) {
     score += 5;
   }
 
-  if (['DigiCert', 'Sectigo', 'GlobalSign'].includes(sslReport.issuer)) {
-    score += 5;
-  }
+  // Clamp score to valid range
+  score = Math.max(0, Math.min(100, score));
 
-  // Apply Trusted Domain Override scoreFloor
-  score = Math.max(scoreFloor, Math.min(100, score));
-
-  // Determine confidence based on API availability
-  if (!threatFeeds.virusTotalReport && !threatFeeds.abuseIpReport) {
-    confidence = 'LOW';
-  } else if (!threatFeeds.virusTotalReport || !threatFeeds.abuseIpReport) {
-    confidence = 'MEDIUM';
-  }
-
-  // Determine verdict and dynamic summary
+  // Determine verdict based on refined thresholds
   let verdict: 'SAFE' | 'CAUTION' | 'DANGEROUS';
   let summary: string;
 
-  if (score >= 80) {
+  if (score >= 75) {
     verdict = 'SAFE';
-    summary = 'This URL appears to be safe based on our comprehensive security analysis.';
-  } else if (score >= 50) {
+    summary = 'This URL appears to be safe based on our security analysis.';
+  } else if (score >= 40) {
     verdict = 'CAUTION';
-    summary = 'This URL shows some risk indicators. Exercise caution when visiting.';
+    summary = 'This URL shows risk indicators. Exercise caution when visiting.';
   } else {
     verdict = 'DANGEROUS';
     summary = 'This URL has been flagged as potentially dangerous. Avoid visiting this site.';
   }
 
-  // Generate dynamic summary based on confirmed threat vectors
+  // Generate specific summary based on top threat
   if (threatVectors.length > 0) {
     const topThreat = threatVectors[0];
     if (topThreat.includes('MALICIOUS') || topThreat.includes('FLAGGED')) {
-      summary = 'This domain is flagged as malicious by multiple security vendors.';
-    } else if (topThreat.includes('RECENTLY_CREATED')) {
-      summary = 'This domain was registered recently, which is a common indicator of malicious intent.';
-    } else if (topThreat.includes('IP_HIGH_ABUSE')) {
-      summary = 'This domain\'s IP address has a high abuse confidence rating.';
+      summary = 'This domain is flagged as malicious by security vendors.';
+    } else if (topThreat.includes('EXTREMELY_NEW') || topThreat.includes('RECENTLY_CREATED')) {
+      summary = 'This domain was registered very recently, which is a red flag for malicious activity.';
+    } else if (topThreat.includes('ABUSE')) {
+      summary = 'This domain\'s IP address has a concerning abuse confidence rating.';
+    } else if (topThreat.includes('LIMITED_INTELLIGENCE')) {
+      summary = 'Limited threat intelligence available. Score based on partial analysis.';
     }
   }
 
-  // Override summary for trusted domains
-  if (isTrustedDomain && verdict === 'SAFE') {
+  // Override for very high confidence safe domains
+  if (confidence === 'HIGH' && score >= 85 && !threatVectors.some(tv => tv.includes('MALICIOUS') || tv.includes('FLAGGED'))) {
     summary = 'This URL is verified safe by multiple trusted security sources.';
   }
 
