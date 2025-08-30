@@ -178,29 +178,7 @@ serve(async (req) => {
 });
 ```
 
-### **Step 2: Save, Commit, and Push the Fix to GitHub**
 
-This is the most important part. We must update the "master copy" on GitHub to prevent your editor from reverting your changes.
 
-1.  **Save the `index.ts` file** after you have pasted in the new code.
-2.  Go to your terminal and run these three commands, one by one:
-    ```bash
-    git add .
-    ```
-    ```bash
-    git commit -m "fix: apply final api endpoint corrections"
-    ```
-    ```bash
-    git push
-    ```
-    This saves your corrected code permanently to your GitHub repository.
-
-### **Step 3: Deploy the Corrected Code to Supabase**
-
-Now that the master copy on GitHub is correct, you can safely deploy it.
-
-1.  In the same terminal, run the final deploy command:
-    ```bash
-    npx supabase functions deploy security-analysis
     
 
