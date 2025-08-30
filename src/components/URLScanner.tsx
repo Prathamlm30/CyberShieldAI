@@ -25,55 +25,45 @@ const URLScanner = () => {
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
 
-  const mockScan = async (inputUrl: string): Promise<ScanResult> => {
-    // Simulate AI analysis delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    const suspicious_domains = ['phishing-test.com', 'fake-bank.net', 'malware-site.org'];
-    const safe_domains = ['google.com', 'github.com', 'stackoverflow.com'];
-    
-    const domain = inputUrl.replace(/^https?:\/\//, '').split('/')[0];
-    const isSuspicious = suspicious_domains.some(d => domain.includes(d));
-    const isSafe = safe_domains.some(d => domain.includes(d));
-    
-    let riskLevel: 'safe' | 'warning' | 'danger' = 'warning';
-    let trustScore = Math.floor(Math.random() * 40) + 30; // 30-70 for unknown
-    let threats: string[] = [];
-    
-    if (isSuspicious) {
-      riskLevel = 'danger';
-      trustScore = Math.floor(Math.random() * 30) + 10; // 10-40 for dangerous
-      threats = ['Phishing attempt detected', 'Suspicious redirect patterns', 'Unverified SSL certificate'];
-    } else if (isSafe) {
-      riskLevel = 'safe';
-      trustScore = Math.floor(Math.random() * 20) + 80; // 80-100 for safe
-      threats = [];
-    }
-    
-    return {
-      url: inputUrl,
-      trustScore,
-      riskLevel,
-      threats,
-      analysis: {
-        ssl: !isSuspicious,
-        reputation: trustScore,
-        phishing: isSuspicious,
-        malware: isSuspicious && Math.random() > 0.5,
-        blockchain_verified: isSafe
-      }
-    };
-  };
-
+  // The new handleScan function that calls your real backend API
   const handleScan = async () => {
     if (!url) return;
     
     setIsScanning(true);
+    setScanResult(null); // Clear previous results to show the loading spinner
+
     try {
-      const result = await mockScan(url);
-      setScanResult(result);
+      // 1. Call your new backend endpoint at /api/scan
+      const response = await fetch('/api/scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urlToCheck: url })
+      });
+
+      if (!response.ok) {
+        throw new Error('API call failed');
+      }
+
+      const result = await response.json();
+
+      // 2. Update your state with the REAL results from Google
+      setScanResult({
+        url: url,
+        trustScore: result.isSafe ? 95 : 15, 
+        riskLevel: result.isSafe ? 'safe' : 'danger',
+        threats: result.isSafe ? [] : [`Threat detected: ${result.threatType}`],
+        analysis: {
+           ssl: true, // This is still a placeholder, a real check is complex
+           reputation: result.isSafe ? 95 : 15,
+           phishing: result.threatType === 'SOCIAL_ENGINEERING',
+           malware: result.threatType === 'MALWARE',
+           blockchain_verified: false, // This remains a mock value
+        }
+      });
+
     } catch (error) {
       console.error('Scan failed:', error);
+      // Optional: You could set an error state here to show a message in the UI
     } finally {
       setIsScanning(false);
     }
