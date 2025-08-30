@@ -85,7 +85,7 @@ async function performDomainAnalysis(domain: string): Promise<DomainIntel> {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             domain: domain,
-            key: WHOISJSON_API_KEY
+            apiKey: WHOISJSON_API_KEY
           })
         });
         
@@ -200,7 +200,7 @@ async function performThreatIntelligence(url: string, ipAddress: string): Promis
   if (GOOGLE_SAFE_BROWSING_API_KEY) {
     try {
         // +++ FIX #2: Corrected the fetch call to use POST with a JSON body +++
-        const webRiskResponse = await fetch(`https://webrisk.googleapis.com/v1/uris:search?key=${GOOGLE_SAFE_BROWSING_API_KEY}`, {
+        const webRiskResponse = await fetch(`https://webrisk.googleapis.com/uris:search?key=${GOOGLE_SAFE_BROWSING_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
